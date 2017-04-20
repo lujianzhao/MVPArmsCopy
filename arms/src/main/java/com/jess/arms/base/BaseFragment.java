@@ -39,7 +39,7 @@ public abstract class BaseFragment<P extends IPresenter> extends SupportFragment
     protected P mPresenter;
     private Unbinder mUnbinder;
 
-    protected abstract View initView(LayoutInflater inflater, ViewGroup container);
+    protected abstract int getContentViewId();
 
     /**
      * 提供AppComponent(提供所有的单例对象)给子类，进行Component依赖
@@ -47,6 +47,7 @@ public abstract class BaseFragment<P extends IPresenter> extends SupportFragment
      */
     protected abstract void setupFragmentComponent(AppComponent appComponent);
 
+    protected abstract void initView();
 
     protected abstract void initData();
 
@@ -92,9 +93,10 @@ public abstract class BaseFragment<P extends IPresenter> extends SupportFragment
                 parent.removeView(mRootView);
             }
         } else {
-            mRootView = initView(inflater, container);
+            mRootView = inflater.inflate(getContentViewId(), container, false);
             //绑定到butterknife
             mUnbinder = ButterKnife.bind(this, mRootView);
+            initView();
         }
         return mRootView;
     }

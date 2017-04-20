@@ -5,8 +5,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.LayoutInflater;
-import android.view.View;
 
 import com.apkfuns.logutils.LogUtils;
 import com.jess.arms.base.BaseActivity;
@@ -42,8 +40,12 @@ public class UserActivity extends BaseActivity<UserContract.Presenter> implement
 
 
     @Override
-    protected View initView() {
-        return LayoutInflater.from(this).inflate(R.layout.activity_user, null, false);
+    protected void initView() {
+    }
+
+    @Override
+    protected int getContentViewId() {
+        return R.layout.activity_user;
     }
 
     @Override

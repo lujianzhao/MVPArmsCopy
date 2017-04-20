@@ -54,14 +54,15 @@ public abstract class BaseActivity<P extends IPresenter> extends SupportActivity
     @Inject
     protected ImageLoader mImageLoader;
 
-
-    protected abstract View initView();
+    protected abstract int getContentViewId();
 
     /**
      * 提供AppComponent(提供所有的单例对象)给子类，进行Component依赖
      * @param appComponent
      */
     protected abstract void setupActivityComponent(AppComponent appComponent);
+
+    protected abstract void initView();
 
     protected abstract void initData();
 
@@ -120,13 +121,15 @@ public abstract class BaseActivity<P extends IPresenter> extends SupportActivity
         mApplication = (BaseApplication) getApplication();
 
         onBeforeSetContentView();
-        setContentView(initView());
+        setContentView(getContentViewId());
         //绑定到butterknife
         mUnbinder = ButterKnife.bind(this);
         setupActivityComponent(mApplication.getAppComponent());//依赖注入
-        initData();
 
         lifecycleSubject.onNext(ActivityEvent.CREATE);
+
+        initView();
+        initData();
     }
 
     protected void onBeforeSetContentView() {
