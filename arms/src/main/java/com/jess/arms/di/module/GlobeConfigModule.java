@@ -85,7 +85,7 @@ public class GlobeConfigModule {
     @Provides
     File provideCacheFile(Application application) {
         if (mCacheFile == null) {
-            mCacheFile = new File(FileUtil.getCacheDir());
+            mCacheFile = new File(FileUtil.getCacheDir(application));
         }
         return mCacheFile;
     }

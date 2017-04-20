@@ -1,10 +1,7 @@
 package me.jessyan.mvparms.demo.mvp.presenter;
 
-import android.app.Application;
-
-import com.jess.arms.integration.AppManager;
 import com.jess.arms.base.DefaultAdapter;
-import com.jess.arms.common.utils.PermissionUtil;
+import com.jess.arms.di.component.AppComponent;
 import com.jess.arms.di.scope.ActivityScope;
 import com.jess.arms.mvp.PresenterImp;
 import com.jess.arms.rx.RetryWithDelay;
@@ -39,8 +36,8 @@ public class UserPresenter extends PresenterImp<UserContract.Model, UserContract
 
 
     @Inject
-    public UserPresenter(UserContract.Model model, UserContract.View rootView, Application application, AppManager appManager) {
-        super(model, rootView, application, appManager);
+    public UserPresenter(UserContract.Model model, UserContract.View rootView, AppComponent appComponent) {
+        super(model, rootView, appComponent);
         mAdapter = new UserAdapter(mUsers);
         mRootView.setAdapter(mAdapter);//设置Adapter
     }
@@ -49,22 +46,22 @@ public class UserPresenter extends PresenterImp<UserContract.Model, UserContract
     public void requestUsers(final boolean pullToRefresh) {
 
         //请求外部存储权限用于适配android6.0的权限管理机制
-        PermissionUtil.externalStorage(mRootView.getRxPermissions()).compose(RxUtils.<Boolean>bindToLifecycle(mRootView)).subscribe(new SimpleObserver<Boolean>() {
-            @Override
-            public void onNext(Boolean value) {
-
-            }
-
-            @Override
-            public void onError(Throwable e) {
-
-            }
-
-            @Override
-            public void onComplete() {
-
-            }
-        });
+//        PermissionUtil.externalStorage(mRootView.getRxPermissions()).compose(RxUtils.<Boolean>bindToLifecycle(mRootView)).subscribe(new SimpleObserver<Boolean>() {
+//            @Override
+//            public void onNext(Boolean value) {
+//
+//            }
+//
+//            @Override
+//            public void onError(Throwable e) {
+//
+//            }
+//
+//            @Override
+//            public void onComplete() {
+//
+//            }
+//        });
 
 
         if (pullToRefresh)

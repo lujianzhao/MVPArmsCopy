@@ -21,7 +21,10 @@ import java.util.regex.Pattern;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
 
 import static com.bumptech.glide.gifdecoder.GifHeaderParser.TAG;
 
@@ -35,83 +38,152 @@ import static com.bumptech.glide.gifdecoder.GifHeaderParser.TAG;
  */
 public class TelephoneUtil {
 
+    private String mDeviceIdSavePath = null;
+
+    private class DeviceIdBean {
+        private String deviceId;
+        private boolean hasWriteToFile; // 是否需要写到文件
+    }
+
+    private static volatile TelephoneUtil INSTANCE;
+
+    private TelephoneUtil() {
+    }
+
+    public static TelephoneUtil getInstance() {
+        if (INSTANCE == null) {
+            synchronized (TelephoneUtil.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new TelephoneUtil();
+                }
+            }
+        }
+        return INSTANCE;
+    }
+
+
     /**
      * 获取设备唯一ID
-     * 先以IMEI为准，如果IMEI为空，则androidId
-     * 下次使用deviceId的时候优先从外部存储读取，再从背部存储读取，最后在重新生成，尽可能的保证其不变性
-     *
+     * 1、读取硬盘保存的设备ID
+     * 2、从机型获取设备ID
+     * 3、从IMEI获取设备ID
+     * 4、根基androidId生成随机的设备ID
+     * 5、保存到硬盘
      * @param activity
      * @return
      */
-    public static Observable<String> getDeviceId(final Activity activity) {
-       return new RxPermissions(activity)
-                .request(Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE)
-                .flatMap(new Function<Boolean, ObservableSource<String>>() {
-                    @Override
-                    public ObservableSource<String> apply(Boolean granted) throws Exception {
-                        String path = null;
-                        if (granted) {
-                            path = getExternalStoragePath();
-                        }
+    public Observable<String> getDeviceId(Activity activity) {
+        final RxPermissions rxPermissions = new RxPermissions(activity);
+        final Context context = activity.getApplication();
+        return rxPermissions.request(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE).subscribeOn(AndroidSchedulers.mainThread()).observeOn(Schedulers.io()).flatMap(new Function<Boolean, ObservableSource<DeviceIdBean>>() {
+            @Override
+            public ObservableSource<DeviceIdBean> apply(Boolean granted) throws Exception {
+                if (granted) {
+                    mDeviceIdSavePath = getExternalStoragePath();
+                }
 
-                        if (Check.isEmpty(path)) {
-                            path = getPath();
+                if (Check.isEmpty(mDeviceIdSavePath)) {
+                    mDeviceIdSavePath = getExternalFilesPath(context);
+                }
+                String deviceId = FileUtil.getFileOutputString(mDeviceIdSavePath);
+
+                DeviceIdBean bean = new DeviceIdBean();
+                bean.deviceId = deviceId;
+                return Observable.just(bean);
+            }
+        }).observeOn(Schedulers.newThread()).flatMap(new Function<DeviceIdBean, ObservableSource<DeviceIdBean>>() {
+            @Override
+            public ObservableSource<DeviceIdBean> apply(@NonNull DeviceIdBean bean) throws Exception {
+                if (isEmpty(bean.deviceId)) {
+                    bean.hasWriteToFile = true;
+                    //从机型获取deviceId
+                    bean.deviceId = getDeviceIdWithModel(context);
+                }
+
+                return Observable.just(bean);
+            }
+        }).flatMap(new Function<DeviceIdBean, ObservableSource<DeviceIdBean>>() {
+            @Override
+            public ObservableSource<DeviceIdBean> apply(@NonNull DeviceIdBean bean) throws Exception {
+                if (isEmpty(bean.deviceId)) {
+                    //从IMEI获取
+                    return rxPermissions.request(Manifest.permission.READ_PHONE_STATE)
+                            .subscribeOn(AndroidSchedulers.mainThread())
+                            .observeOn(Schedulers.newThread())
+                            .flatMap(new Function<Boolean, ObservableSource<DeviceIdBean>>() {
+                        @Override
+                        public ObservableSource<DeviceIdBean> apply(@NonNull Boolean granted) throws Exception {
+                            DeviceIdBean bean = new DeviceIdBean();
+                            bean.hasWriteToFile = true;
+                            if (granted) {
+                                bean.deviceId = getIMEI(context);
+                            }
+                            return Observable.just(bean);
                         }
-                        String deviceId = readAndWriteDeviceId(activity, path);
-                        return Observable.just(deviceId);
-                    }
-                });
+                    });
+                }
+                return Observable.just(bean);
+            }
+        }).flatMap(new Function<DeviceIdBean, ObservableSource<DeviceIdBean>>() {
+
+            @Override
+            public ObservableSource<DeviceIdBean> apply(@NonNull DeviceIdBean bean) throws Exception {
+                if (isEmpty(bean.deviceId)) {
+                    bean.hasWriteToFile = true;
+                    //随机生成
+                    bean.deviceId = getUniversalID(context);
+                }
+                return Observable.just(bean);
+            }
+        }).observeOn(Schedulers.io()).flatMap(new Function<DeviceIdBean, ObservableSource<String>>() {
+            @Override
+            public ObservableSource<String> apply(@NonNull DeviceIdBean bean) throws Exception {
+                if (bean.hasWriteToFile && !isEmpty(bean.deviceId)) {
+                    //保存
+                    saveDeviceId(bean.deviceId, mDeviceIdSavePath);
+                }
+                return Observable.just(bean.deviceId);
+            }
+        }).observeOn(AndroidSchedulers.mainThread());
+
     }
 
-    private static String readAndWriteDeviceId(Context context,String path) {
-        String deviceId = FileUtil.getFileOutputString(path);
+    private String getDeviceIdWithModel(Context context) {
+        String deviceId = null;
+        //是否是MTK机型
+        TeleInfo mtkTeleInfo = getMtkTeleInfo(context);
+        if (mtkTeleInfo != null && !isEmpty(mtkTeleInfo.imei_1) && !isEmpty(mtkTeleInfo.imei_2)) {
+            deviceId = mtkTeleInfo.imei_1 + mtkTeleInfo.imei_2;
+        }
+
+        //是否是MTK2机型
         if (isEmpty(deviceId)) {
-            //是否是MTK机型
-            TeleInfo mtkTeleInfo = getMtkTeleInfo(context);
-            if (mtkTeleInfo != null && !isEmpty(mtkTeleInfo.imei_1) && !isEmpty(mtkTeleInfo.imei_2)) {
-                deviceId = mtkTeleInfo.imei_1 + mtkTeleInfo.imei_2;
+            TeleInfo mtkTeleInfo2 = getMtkTeleInfo2(context);
+            if (mtkTeleInfo2 != null && !isEmpty(mtkTeleInfo2.imei_1) && !isEmpty(mtkTeleInfo2.imei_2)) {
+                deviceId = mtkTeleInfo2.imei_1 + mtkTeleInfo2.imei_2;
             }
+        }
 
-            //是否是MTK2机型
-            if (isEmpty(deviceId)) {
-                TeleInfo mtkTeleInfo2 = getMtkTeleInfo2(context);
-                if (mtkTeleInfo2 != null && !isEmpty(mtkTeleInfo2.imei_1) && !isEmpty(mtkTeleInfo2.imei_2)) {
-                    deviceId = mtkTeleInfo2.imei_1 + mtkTeleInfo2.imei_2;
-                }
+        //是否是高通机型
+        if (isEmpty(deviceId)) {
+            TeleInfo qualcommTeleInfo = getQualcommTeleInfo(context);
+            if (qualcommTeleInfo != null && !isEmpty(qualcommTeleInfo.imei_1) && !isEmpty(qualcommTeleInfo.imei_2)) {
+                deviceId = qualcommTeleInfo.imei_1 + qualcommTeleInfo.imei_2;
             }
+        }
 
-            //是否是高通机型
-            if (isEmpty(deviceId)) {
-                TeleInfo qualcommTeleInfo = getQualcommTeleInfo(context);
-                if (qualcommTeleInfo != null && !isEmpty(qualcommTeleInfo.imei_1) && !isEmpty(qualcommTeleInfo.imei_2)) {
-                    deviceId = qualcommTeleInfo.imei_1 + qualcommTeleInfo.imei_2;
-                }
-            }
-
-            //是否是展讯机型
-            if (isEmpty(deviceId)) {
-                TeleInfo spreadtrumTeleInfo = getSpreadtrumTeleInfo(context);
-                if (spreadtrumTeleInfo != null  && !isEmpty(spreadtrumTeleInfo.imei_1) && !isEmpty(spreadtrumTeleInfo.imei_2)) {
-                    deviceId = spreadtrumTeleInfo.imei_1 + spreadtrumTeleInfo.imei_2;
-                }
-            }
-
-            if (isEmpty(deviceId)) {
-                deviceId = getIMEI(context);
-            }
-
-            if (isEmpty(deviceId)) {
-                deviceId = getUniversalID(context);
-            }
-
-            if (!isEmpty(deviceId)) {
-                saveDeviceId(deviceId,path);
+        //是否是展讯机型
+        if (isEmpty(deviceId)) {
+            TeleInfo spreadtrumTeleInfo = getSpreadtrumTeleInfo(context);
+            if (spreadtrumTeleInfo != null && !isEmpty(spreadtrumTeleInfo.imei_1) && !isEmpty(spreadtrumTeleInfo.imei_2)) {
+                deviceId = spreadtrumTeleInfo.imei_1 + spreadtrumTeleInfo.imei_2;
             }
         }
         return deviceId;
     }
 
-    private static boolean isEmpty(String deviceId) {
+
+    private boolean isEmpty(String deviceId) {
         return Check.isEmpty(deviceId) || Pattern.matches("^0+$", deviceId);
     }
 
@@ -119,7 +191,7 @@ public class TelephoneUtil {
      * 首先通过读取Android_id,作为UUID的种子。若得到Android_Id等于9774d56d682e549c 或者 发生错误
      * 则 random 一个 UUID 作为备用方案
      */
-    public static String getUniversalID(Context context) {
+    private String getUniversalID(Context context) {
         String uuid;
         String androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
         if (!Check.isEmpty(androidId) && !"9774d56d682e549c".equals(androidId)) {
@@ -134,11 +206,11 @@ public class TelephoneUtil {
         return uuid;
     }
 
-    private static void saveDeviceId(String deviceId,String path) {
+    private void saveDeviceId(String deviceId, String path) {
         FileUtil.writeFile(deviceId, path, false);
     }
 
-    private static String getExternalStoragePath() {
+    private String getExternalStoragePath() {
         String dir = FileUtil.getExternalStorageDirectory("UTips");
         if (Check.isEmpty(dir)) {
             return null;
@@ -150,8 +222,8 @@ public class TelephoneUtil {
     }
 
 
-    private static String getPath() {
-        StringBuilder sb = new StringBuilder(FileUtil.getDocumentDir());
+    private String getExternalFilesPath(Context context) {
+        StringBuilder sb = new StringBuilder(FileUtil.getDocumentDir(context));
         sb.append(File.separator);
         sb.append("device_id");
         return sb.toString();
@@ -263,14 +335,7 @@ public class TelephoneUtil {
 
         @Override
         public String toString() {
-            return "TeleInfo{" +
-                    "imsi_1='" + imsi_1 + '\'' +
-                    ", imsi_2='" + imsi_2 + '\'' +
-                    ", imei_1='" + imei_1 + '\'' +
-                    ", imei_2='" + imei_2 + '\'' +
-                    ", phoneType_1=" + phoneType_1 +
-                    ", phoneType_2=" + phoneType_2 +
-                    '}';
+            return "TeleInfo{" + "imsi_1='" + imsi_1 + '\'' + ", imsi_2='" + imsi_2 + '\'' + ", imei_1='" + imei_1 + '\'' + ", imei_2='" + imei_2 + '\'' + ", phoneType_1=" + phoneType_1 + ", phoneType_2=" + phoneType_2 + '}';
         }
     }
 
@@ -279,7 +344,7 @@ public class TelephoneUtil {
      * <p>
      * 获取 MTK 神机的双卡 IMSI、IMSI 信息
      */
-    public static TeleInfo getMtkTeleInfo(Context context) {
+    private TeleInfo getMtkTeleInfo(Context context) {
         try {
             TeleInfo teleInfo = new TeleInfo();
 
@@ -326,7 +391,7 @@ public class TelephoneUtil {
      * <p>
      * 获取 MTK 神机的双卡 IMSI、IMSI 信息
      */
-    public static TeleInfo getMtkTeleInfo2(Context context) {
+    private TeleInfo getMtkTeleInfo2(Context context) {
         try {
             TeleInfo teleInfo = new TeleInfo();
             TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
@@ -369,7 +434,7 @@ public class TelephoneUtil {
      * Qualcomm Phone.
      * 获取 高通 神机的双卡 IMSI、IMSI 信息
      */
-    public static TeleInfo getQualcommTeleInfo(Context context) {
+    private TeleInfo getQualcommTeleInfo(Context context) {
 
         try {
             TeleInfo teleInfo = new TeleInfo();
@@ -412,7 +477,7 @@ public class TelephoneUtil {
      * <p>
      * 获取 展讯 神机的双卡 IMSI、IMSI 信息
      */
-    public static TeleInfo getSpreadtrumTeleInfo(Context context) {
+    private TeleInfo getSpreadtrumTeleInfo(Context context) {
 
         try {
             TeleInfo teleInfo = new TeleInfo();

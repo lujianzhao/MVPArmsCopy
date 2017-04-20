@@ -1,5 +1,6 @@
 package com.jess.arms.common.luban;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -45,11 +46,11 @@ public class Luban {
         mCacheDir = cacheDir;
     }
 
-    public static Luban get() {
+    public static Luban get(Context context) {
         if (INSTANCE == null) {
             synchronized (Luban.class) {
                 if (INSTANCE == null) {
-                    INSTANCE = new Luban(new File(FileUtil.getIconDir()));
+                    INSTANCE = new Luban(new File(FileUtil.getIconDir(context)));
                 }
             }
         }

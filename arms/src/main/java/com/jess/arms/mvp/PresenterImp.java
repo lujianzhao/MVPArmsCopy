@@ -1,8 +1,6 @@
 package com.jess.arms.mvp;
 
-import android.app.Application;
-
-import com.jess.arms.integration.AppManager;
+import com.jess.arms.di.component.AppComponent;
 import com.jess.arms.netstate.INetChangeObserver;
 import com.jess.arms.netstate.NetWorkUtil;
 import com.jess.arms.netstate.NetworkStateReceiver;
@@ -19,23 +17,20 @@ public class PresenterImp<M extends IModel, V extends IView> implements IPresent
 
     private CompositeDisposable mCompositeDisposable;
 
-    protected Application mApplication;
-
-    protected AppManager mAppManager;
+    protected AppComponent mAppComponent;
 
     protected M mModel;
 
     protected V mRootView;
 
-    public PresenterImp( Application application,AppManager appManager) {
-        this(null,null,application,appManager);
+    public PresenterImp(AppComponent appComponent) {
+        this(null,null,appComponent);
     }
 
-    public PresenterImp(M model, V rootView, Application application,AppManager appManager) {
+    public PresenterImp(M model, V rootView, AppComponent appComponent) {
         this.mModel = model;
         this.mRootView = rootView;
-        this.mApplication = application;
-        this.mAppManager = appManager;
+        this.mAppComponent = appComponent;
         onStart();
     }
 
@@ -65,9 +60,7 @@ public class PresenterImp<M extends IModel, V extends IView> implements IPresent
 
         this.mRootView = null;
 
-        this.mAppManager = null;
-
-        this.mApplication = null;
+        this.mAppComponent = null;
     }
 
     /**

@@ -1,10 +1,10 @@
 package com.jess.arms.common.utils;
 
+import android.content.Context;
 import android.os.Environment;
 import android.text.TextUtils;
 
 import com.apkfuns.logutils.LogUtils;
-import com.jess.arms.base.BaseApplication;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -29,21 +29,21 @@ import java.util.Properties;
 public class FileUtil {
 
     //    public static final String ROOT_DIR = "Android/data/"+ UIUtil.getPackageName();
-    public static final String DOWNLOAD_DIR = Environment.DIRECTORY_DOWNLOADS;
-    public static final String DOCUMENTS_DIR = "Documents";
-    public static final String CACHE_DIR = "cache";
-    public static final String ICON_DIR = "icon";
+    private static final String DOWNLOAD_DIR = Environment.DIRECTORY_DOWNLOADS;
+    private static final String DOCUMENTS_DIR = "Documents";
+    private static final String CACHE_DIR = "cache";
+    private static final String ICON_DIR = "icon";
 
     /** * 清除本应用所有的数据 * * @param context * @param filepath */
-    public static void cleanApplicationData() {
-        delAllFile(BaseApplication.getContext().getCacheDir().getAbsolutePath());
-        delAllFile(getDownloadDir());
-        delAllFile(getCacheDir());
-        delAllFile(getIconDir());
+    public static void cleanApplicationData(Context context) {
+        delAllFile(context.getCacheDir().getAbsolutePath());
+        delAllFile(getDownloadDir(context));
+        delAllFile(getCacheDir(context));
+        delAllFile(getIconDir(context));
         //清理Webview缓存数据库
         try {
-            BaseApplication.getContext().deleteDatabase("webview.db");
-            BaseApplication.getContext().deleteDatabase("webviewCache.db");
+            context.deleteDatabase("webview.db");
+            context.deleteDatabase("webviewCache.db");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -78,23 +78,23 @@ public class FileUtil {
     }
 
     /** 获取用户文件目录 */
-    public static String getDocumentDir() {
-        return getAppFileDir(DOCUMENTS_DIR);
+    public static String getDocumentDir(Context context) {
+        return getAppFileDir(context,DOCUMENTS_DIR);
     }
 
     /** 获取下载目录 */
-    public static String getDownloadDir() {
-        return getAppFileDir(DOWNLOAD_DIR);
+    public static String getDownloadDir(Context context) {
+        return getAppFileDir(context,DOWNLOAD_DIR);
     }
 
     /** 获取缓存目录 */
-    public static String getCacheDir() {
-        return getAppCacheDir(CACHE_DIR);
+    public static String getCacheDir(Context context) {
+        return getAppCacheDir(context,CACHE_DIR);
     }
 
     /** 获取icon目录 */
-    public static String getIconDir() {
-        return getAppCacheDir(ICON_DIR);
+    public static String getIconDir(Context context) {
+        return getAppCacheDir(context,ICON_DIR);
     }
 
     /**
@@ -151,12 +151,12 @@ public class FileUtil {
     }
 
     /** 获取应用目录，当SD卡存在时，获取SD卡上的目录，当SD卡不存在时，获取应用的cache目录 */
-    public static String getAppCacheDir(String name) {
+    public static String getAppCacheDir(Context context,String name) {
         StringBuilder sb = new StringBuilder();
         if (isSDCardAvailable()) {
-            sb.append(getExternalCacheDir());
+            sb.append(getExternalCacheDir(context));
         } else {
-            sb.append(getCachePath());
+            sb.append(getCachePath(context));
         }
         sb.append(name);
         sb.append(File.separator);
@@ -169,12 +169,12 @@ public class FileUtil {
     }
 
     /** 获取应用目录，当SD卡存在时，获取SD卡上的目录，当SD卡不存在时，获取应用的file目录 */
-    public static String getAppFileDir(String type) {
+    public static String getAppFileDir(Context context,String type) {
         StringBuilder sb = new StringBuilder();
         if (isSDCardAvailable()) {
-            sb.append(getExternalFileDir(type));
+            sb.append(getExternalFileDir(context,type));
         } else {
-            sb.append(getFilePath(type));
+            sb.append(getFilePath(context,type));
         }
 
         String path = sb.toString();
@@ -186,8 +186,8 @@ public class FileUtil {
     }
 
     /** 获取SD下的应用目录 */
-    public static String getExternalCacheDir() {
-        File f = BaseApplication.getContext().getExternalCacheDir();
+    public static String getExternalCacheDir(Context context) {
+        File f = context.getExternalCacheDir();
         if (null == f) {
             return null;
         } else {
@@ -196,8 +196,8 @@ public class FileUtil {
     }
 
     /** 获取应用的cache目录 */
-    public static String getCachePath() {
-        File f = BaseApplication.getContext().getCacheDir();
+    public static String getCachePath(Context context) {
+        File f = context.getCacheDir();
         if (null == f) {
             return null;
         } else {
@@ -206,8 +206,8 @@ public class FileUtil {
     }
 
     /** 获取SD下的应用目录 */
-    public static String getExternalFileDir(String type) {
-        File f = BaseApplication.getContext().getExternalFilesDir(type);
+    public static String getExternalFileDir(Context context,String type) {
+        File f = context.getExternalFilesDir(type);
         if (null == f) {
             return null;
         } else {
@@ -216,8 +216,8 @@ public class FileUtil {
     }
 
     /** 获取应用的file目录 */
-    public static String getFilePath(String type) {
-        File f = BaseApplication.getContext().getFilesDir();
+    public static String getFilePath(Context context,String type) {
+        File f = context.getFilesDir();
         if (null == f) {
             return null;
         } else {

@@ -17,19 +17,10 @@ import java.io.File;
  * Created by jess on 16/4/15.
  */
 public class GlideConfiguration extends OkHttpGlideModule {
-    public static final int IMAGE_DISK_CACHE_MAX_SIZE = 100 * 1024 * 1024;//图片缓存文件最大值为100Mb
 
     @Override
     public void applyOptions(Context context, GlideBuilder builder) {
-        builder.setDiskCache(new DiskCache.Factory() {
-            @Override
-            public DiskCache build() {
-                // Careful: the external cache directory doesn't enforce permissions
-                File cacheDirectory = new File(FileUtil.getCacheDir(), "Glide");
-                FileUtil.createDirs(cacheDirectory);
-                return DiskLruCacheWrapper.get(cacheDirectory, IMAGE_DISK_CACHE_MAX_SIZE);
-            }
-        });
+        builder.setDiskCache(new GlideDiskCacheFactory(context));
 
         MemorySizeCalculator calculator = new MemorySizeCalculator(context);
         int defaultMemoryCacheSize = calculator.getMemoryCacheSize();
@@ -41,5 +32,25 @@ public class GlideConfiguration extends OkHttpGlideModule {
         builder.setMemoryCache(new LruResourceCache(customMemoryCacheSize));
         builder.setBitmapPool(new LruBitmapPool(customBitmapPoolSize));
 
+    }
+
+    private class GlideDiskCacheFactory implements DiskCache.Factory{
+
+        private static final int IMAGE_DISK_CACHE_MAX_SIZE = 100 * 1024 * 1024;//图片缓存文件最大值为100Mb
+
+        private String mCacheDir;
+
+        GlideDiskCacheFactory(Context context) {
+            super();
+            mCacheDir = FileUtil.getCacheDir(context);
+        }
+
+        @Override
+        public DiskCache build() {
+            // Careful: the external cache directory doesn't enforce permissions
+            File cacheDirectory = new File(mCacheDir, "Glide");
+            FileUtil.createDirs(cacheDirectory);
+            return DiskLruCacheWrapper.get(cacheDirectory, IMAGE_DISK_CACHE_MAX_SIZE);
+        }
     }
 }
