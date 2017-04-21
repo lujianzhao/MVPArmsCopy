@@ -1,6 +1,10 @@
 package me.jessyan.mvparms.demo.mvp.presenter;
 
+import android.app.Activity;
+
+import com.apkfuns.logutils.LogUtils;
 import com.jess.arms.base.DefaultAdapter;
+import com.jess.arms.common.utils.TelephoneUtil;
 import com.jess.arms.di.component.AppComponent;
 import com.jess.arms.di.scope.ActivityScope;
 import com.jess.arms.mvp.PresenterImp;
@@ -117,6 +121,45 @@ public class UserPresenter extends PresenterImp<UserContract.Model, UserContract
 
                     }
                 });
+
+        TelephoneUtil.getInstance().getDeviceId((Activity)mRootView)
+                .compose(RxUtils.<String>bindToLifecycle(mRootView))
+                .subscribe(new SimpleObserver<String>() {
+                    @Override
+                    public void onNext(String s) {
+                        LogUtils.d("设备ID："+s);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
+
+//        ImageUtils.downLoadImageWithGlide((Activity) mRootView,"https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1488950363453&di=a6f3bd7d1b2461d2b6a8c1bb7fa9aeb7&imgtype=0&src=http%3A%2F%2Fc.hiphotos.baidu.com%2Fimage%2Fpic%2Fitem%2Fe7cd7b899e510fb3bde5709ddb33c895d1430c3f.jpg")
+//                .compose(RxUtils.<File>bindToLifecycle(mRootView))
+//                .subscribe(new SimpleObserver<File>() {
+//                    @Override
+//                    public void onNext(File file) {
+//                        LogUtils.d("保存的文件路径："+file.getAbsolutePath());
+//                    }
+//
+//                    @Override
+//                    public void onError(Throwable e) {
+//                        LogUtils.e(e);
+//                    }
+//
+//                    @Override
+//                    public void onComplete() {
+//                        LogUtils.d("下载完成");
+//                    }
+//                });
+
     }
 
     @Override

@@ -44,7 +44,7 @@ public class UserActivity extends BaseActivity<UserContract.Presenter> implement
     }
 
     @Override
-    protected int getContentViewId() {
+    protected  int getContentViewId() {
         return R.layout.activity_user;
     }
 

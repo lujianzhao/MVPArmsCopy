@@ -9,6 +9,8 @@ import android.util.Log;
 
 import com.apkfuns.logutils.LogUtils;
 import com.jess.arms.common.assist.Check;
+import com.jess.arms.common.data.cipher.AESCipher;
+import com.jess.arms.common.data.cipher.Base64Cipher;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import java.io.File;
@@ -75,11 +77,15 @@ public class TelephoneUtil {
     public Observable<String> getDeviceId(Activity activity) {
         final RxPermissions rxPermissions = new RxPermissions(activity);
         final Context context = activity.getApplication();
+        final String key = "$%#$!@#&^%^&**!@";
+
+        final Base64Cipher cipher = new Base64Cipher(new AESCipher(key));
+
         return rxPermissions.request(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE).subscribeOn(AndroidSchedulers.mainThread()).observeOn(Schedulers.io()).flatMap(new Function<Boolean, ObservableSource<DeviceIdBean>>() {
             @Override
             public ObservableSource<DeviceIdBean> apply(Boolean granted) throws Exception {
                 if (granted) {
-                    mDeviceIdSavePath = getExternalStoragePath();
+                    mDeviceIdSavePath = getExternalStoragePath(context);
                 }
 
                 if (Check.isEmpty(mDeviceIdSavePath)) {
@@ -88,7 +94,7 @@ public class TelephoneUtil {
                 String deviceId = FileUtil.getFileOutputString(mDeviceIdSavePath);
 
                 DeviceIdBean bean = new DeviceIdBean();
-                bean.deviceId = deviceId;
+                bean.deviceId = Check.isEmpty(deviceId) ? null : cipher.decrypt(deviceId);
                 return Observable.just(bean);
             }
         }).observeOn(Schedulers.newThread()).flatMap(new Function<DeviceIdBean, ObservableSource<DeviceIdBean>>() {
@@ -140,7 +146,7 @@ public class TelephoneUtil {
             public ObservableSource<String> apply(@NonNull DeviceIdBean bean) throws Exception {
                 if (bean.hasWriteToFile && !isEmpty(bean.deviceId)) {
                     //保存
-                    saveDeviceId(bean.deviceId, mDeviceIdSavePath);
+                    saveDeviceId(cipher.encrypt(bean.deviceId), mDeviceIdSavePath);
                 }
                 return Observable.just(bean.deviceId);
             }
@@ -210,15 +216,21 @@ public class TelephoneUtil {
         FileUtil.writeFile(deviceId, path, false);
     }
 
-    private String getExternalStoragePath() {
-        String dir = FileUtil.getExternalStorageDirectory("UTips");
+    private String getExternalStoragePath(Context context) {
+        String dir = FileUtil.getExternalStorageDirectory(context.getPackageName());
         if (Check.isEmpty(dir)) {
             return null;
         }
         StringBuilder sb = new StringBuilder(dir);
         sb.append(File.separator);
-        sb.append("device_id");
-        return sb.toString();
+        sb.append("UTips");
+        if (FileUtil.createDirs(sb.toString())) {
+            sb.append(File.separator);
+            sb.append("device_id");
+            return sb.toString();
+        } else {
+            return null;
+        }
     }
 
 

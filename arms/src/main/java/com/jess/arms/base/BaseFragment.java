@@ -3,6 +3,7 @@ package com.jess.arms.base;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.CheckResult;
+import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -39,6 +40,7 @@ public abstract class BaseFragment<P extends IPresenter> extends SupportFragment
     protected P mPresenter;
     private Unbinder mUnbinder;
 
+    @LayoutRes
     protected abstract int getContentViewId();
 
     /**

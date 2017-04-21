@@ -147,8 +147,8 @@ public abstract class BaseApplication extends MultiDexApplication {
      * @return
      */
     private GlobeConfigModule getGlobeConfigModule(Application context) {
-        GlobeConfigModule.Buidler builder = GlobeConfigModule
-                .buidler()
+        GlobeConfigModule.Builder builder = GlobeConfigModule
+                .builder()
                 .baseurl("https://api.github.com");//为了防止用户没有通过GlobeConfigModule配置baseurl,而导致报错,所以提前配置个默认baseurl
 
         List<ConfigModule> modules = new ManifestParser(this).parse();

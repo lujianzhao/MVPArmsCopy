@@ -32,11 +32,11 @@ public class GlobeConfigModule {
      * @date 8/5/16 11:03 AM
      * @description: 设置baseurl
      */
-    private GlobeConfigModule(Buidler buidler) {
-        this.mApiUrl = buidler.apiUrl;
-        this.mHandler = buidler.handler;
-        this.mInterceptors = buidler.interceptors;
-        this.mCacheFile = buidler.cacheFile;
+    private GlobeConfigModule(Builder builder) {
+        this.mApiUrl = builder.apiUrl;
+        this.mHandler = builder.handler;
+        this.mInterceptors = builder.interceptors;
+        this.mCacheFile = builder.cacheFile;
     }
 
     /**
@@ -52,8 +52,8 @@ public class GlobeConfigModule {
         mCacheFile = null;
     }
 
-    public static Buidler buidler() {
-        return new Buidler();
+    public static Builder builder() {
+        return new Builder();
     }
 
 
@@ -90,16 +90,17 @@ public class GlobeConfigModule {
         return mCacheFile;
     }
 
-    public static final class Buidler {
+    public static final class Builder {
+
         private HttpUrl apiUrl = HttpUrl.parse("https://api.github.com/");
         private IGlobeHttpHandler handler;
         private List<Interceptor> interceptors = new ArrayList<>();
         private File cacheFile;
 
-        private Buidler() {
+        private Builder() {
         }
 
-        public Buidler baseurl(String baseurl) {//基础url
+        public Builder baseurl(String baseurl) {//基础url
             if (Check.isEmpty(baseurl)) {
                 throw new IllegalArgumentException("baseurl can not be empty");
             }
@@ -107,17 +108,17 @@ public class GlobeConfigModule {
             return this;
         }
 
-        public Buidler globeHttpHandler(IGlobeHttpHandler handler) {//用来处理http响应结果
+        public Builder globeHttpHandler(IGlobeHttpHandler handler) {//用来处理http响应结果
             this.handler = handler;
             return this;
         }
 
-        public Buidler addInterceptor(Interceptor interceptor) {//动态添加任意个interceptor
+        public Builder addInterceptor(Interceptor interceptor) {//动态添加任意个interceptor
             this.interceptors.add(interceptor);
             return this;
         }
 
-        public Buidler cacheFile(File cacheFile) {
+        public Builder cacheFile(File cacheFile) {
             this.cacheFile = cacheFile;
             return this;
         }

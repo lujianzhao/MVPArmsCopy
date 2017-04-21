@@ -10,7 +10,7 @@ import io.rx_cache2.internal.RxCache;
 import static org.junit.Assert.assertEquals;
 
 /**
- * To work on unit tests, switch the Test Artifact in the Build Variants view.
+ * To work on unit tests, switch the AESCipher Artifact in the Build Variants view.
  */
 public class ExampleUnitTest {
     @Test

@@ -180,13 +180,15 @@ public class RequestInterceptor implements Interceptor {
 
             //解析response content
             bodyString = parseContent(responseBody, encoding, clone);
+
+            String printBodyString = bodyString;
             if (isJson(responseBody)) {
-                bodyString = CharactorHandler.jsonFormat(bodyString);
-                if (bodyString.length() > 3072) {
-                    bodyString = bodyString.substring(0,3062) +"\r\n........";
+                printBodyString = CharactorHandler.jsonFormat(printBodyString);
+                if (printBodyString.length() > 3072) {
+                    printBodyString = printBodyString.substring(0,3062) +"\r\n........";
                 }
             }
-            LogUtils.tag("Response").w(bodyString);
+            LogUtils.tag("Response").w(printBodyString);
 
         } else {
             LogUtils.tag("Response").w("This result isn't parsed");

@@ -30,7 +30,7 @@ public interface AppComponent {
     //用于管理网络请求层,以及数据缓存层
     IRepositoryManager getRepositoryManager();
 
-    OkHttpClient okHttpClient();
+    OkHttpClient getOkHttpClient();
 
     //图片管理器,用于加载图片的管理类,默认使用glide,使用策略模式,可替换框架
     ImageLoader getImageLoader();

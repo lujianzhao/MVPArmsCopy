@@ -31,8 +31,8 @@ public class FileUtil {
     //    public static final String ROOT_DIR = "Android/data/"+ UIUtil.getPackageName();
     private static final String DOWNLOAD_DIR = Environment.DIRECTORY_DOWNLOADS;
     private static final String DOCUMENTS_DIR = "Documents";
-    private static final String CACHE_DIR = "cache";
-    private static final String ICON_DIR = "icon";
+//    private static final String CACHE_DIR = "cache";
+    private static final String ICON_DIR = Environment.DIRECTORY_PICTURES;
 
     /** * 清除本应用所有的数据 * * @param context * @param filepath */
     public static void cleanApplicationData(Context context) {
@@ -89,12 +89,12 @@ public class FileUtil {
 
     /** 获取缓存目录 */
     public static String getCacheDir(Context context) {
-        return getAppCacheDir(context,CACHE_DIR);
+        return getAppCacheDir(context);
     }
 
     /** 获取icon目录 */
     public static String getIconDir(Context context) {
-        return getAppCacheDir(context,ICON_DIR);
+        return getAppFileDir(context,ICON_DIR);
     }
 
     /**
@@ -151,16 +151,13 @@ public class FileUtil {
     }
 
     /** 获取应用目录，当SD卡存在时，获取SD卡上的目录，当SD卡不存在时，获取应用的cache目录 */
-    public static String getAppCacheDir(Context context,String name) {
-        StringBuilder sb = new StringBuilder();
+    public static String getAppCacheDir(Context context) {
+        String path ;
         if (isSDCardAvailable()) {
-            sb.append(getExternalCacheDir(context));
+            path = getExternalCacheDir(context);
         } else {
-            sb.append(getCachePath(context));
+            path = getCachePath(context);
         }
-        sb.append(name);
-        sb.append(File.separator);
-        String path = sb.toString();
         if (createDirs(path)) {
             return path;
         } else {

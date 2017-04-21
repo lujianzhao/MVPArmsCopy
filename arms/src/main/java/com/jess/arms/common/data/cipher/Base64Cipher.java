@@ -7,7 +7,7 @@ import android.util.Base64;
  * @author lujianzhao
  * @date 14-7-31
  */
-public class Base64Cipher extends Cipher {
+public class Base64Cipher {
     private Cipher cipher;
 
     public Base64Cipher() {
@@ -17,15 +17,29 @@ public class Base64Cipher extends Cipher {
         this.cipher = cipher;
     }
 
-    @Override
-    public byte[] decrypt(byte[] res) {
-        if(cipher != null) res = cipher.decrypt(res);
-        return Base64.decode(res, Base64.DEFAULT);
+    /**
+     * 解密
+     * @param res
+     * @return
+     */
+    public String decrypt(String res) {
+        byte[] decryptedBytes = Base64.decode(res, Base64.DEFAULT);
+        if(cipher != null){
+            decryptedBytes = cipher.decrypt(decryptedBytes);
+        }
+        return new String(decryptedBytes);
     }
 
-    @Override
-    public byte[] encrypt(byte[] res) {
-        if(cipher != null) res = cipher.encrypt(res);
-        return Base64.encode(res, Base64.DEFAULT);
+    /**
+     * 加密
+     * @param res
+     * @return
+     */
+    public String encrypt(String res) {
+        byte[] encryptedBytes = res.getBytes();
+        if(cipher != null){
+            encryptedBytes = cipher.encrypt(encryptedBytes);
+        }
+        return Base64.encodeToString(encryptedBytes, Base64.DEFAULT);
     }
 }

@@ -32,7 +32,7 @@ import okhttp3.Response;
 public class GlobalConfiguration implements ConfigModule {
 
     @Override
-    public void applyOptions(Context context, GlobeConfigModule.Buidler builder) {
+    public void applyOptions(Context context, GlobeConfigModule.Builder builder) {
         builder.baseurl(Api.APP_DOMAIN)
                 .globeHttpHandler(new IGlobeHttpHandler() {// 这里可以提供一个全局处理Http请求和响应结果的处理类,
                     // 这里可以比客户端提前一步拿到服务器返回的结果,可以做一些操作,比如token超时,重新获取
