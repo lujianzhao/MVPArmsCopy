@@ -6,19 +6,16 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.CallSuper;
 import android.support.annotation.CheckResult;
-import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.view.WindowManager;
 
+import com.jess.arms.base.delegate.IActivity;
 import com.jess.arms.common.utils.DensityUtil;
-import com.jess.arms.di.component.AppComponent;
 import com.jess.arms.mvp.IPresenter;
-import com.jess.arms.widget.imageloader.ImageLoader;
 import com.trello.rxlifecycle2.LifecycleProvider;
 import com.trello.rxlifecycle2.LifecycleTransformer;
 import com.trello.rxlifecycle2.RxLifecycle;
@@ -30,43 +27,20 @@ import com.zhy.autolayout.AutoRelativeLayout;
 
 import javax.inject.Inject;
 
-import butterknife.ButterKnife;
-import butterknife.Unbinder;
 import io.reactivex.Observable;
 import io.reactivex.subjects.BehaviorSubject;
 import me.yokeyword.fragmentation.SupportActivity;
 
-public abstract class BaseActivity<P extends IPresenter> extends SupportActivity implements LifecycleProvider<ActivityEvent> {
+import static com.jess.arms.base.delegate.IActivityDelegate.LAYOUT_FRAMELAYOUT;
+import static com.jess.arms.base.delegate.IActivityDelegate.LAYOUT_LINEARLAYOUT;
+import static com.jess.arms.base.delegate.IActivityDelegate.LAYOUT_RELATIVELAYOUT;
 
-    private static final String LAYOUT_LINEARLAYOUT = "LinearLayout";
-    private static final String LAYOUT_FRAMELAYOUT = "FrameLayout";
-    private static final String LAYOUT_RELATIVELAYOUT = "RelativeLayout";
-    public static final String IS_NOT_ADD_ACTIVITY_LIST = "is_add_activity_list";//是否加入到activity的list，管理
+public abstract class BaseActivity<P extends IPresenter> extends SupportActivity implements IActivity,LifecycleProvider<ActivityEvent> {
 
     private final BehaviorSubject<ActivityEvent> lifecycleSubject = BehaviorSubject.create();
 
-    protected App mApp;
-
-    private Unbinder mUnbinder;
-
     @Inject
     protected P mPresenter;
-
-    @Inject
-    protected ImageLoader mImageLoader;
-
-    @LayoutRes
-    protected abstract int getContentViewId();
-
-    /**
-     * 提供AppComponent(提供所有的单例对象)给子类，进行Component依赖
-     * @param appComponent
-     */
-    protected abstract void setupActivityComponent(AppComponent appComponent);
-
-    protected abstract void initView();
-
-    protected abstract void initData();
 
 
     @Override
@@ -116,25 +90,7 @@ public abstract class BaseActivity<P extends IPresenter> extends SupportActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            //新版本的转场动画
-            getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
-        }
-        mApp = (App) getApplication();
-
-        onBeforeSetContentView();
-        setContentView(getContentViewId());
-        //绑定到butterknife
-        mUnbinder = ButterKnife.bind(this);
-        setupActivityComponent(mApp.getAppComponent());//依赖注入
-
         lifecycleSubject.onNext(ActivityEvent.CREATE);
-
-        initView();
-        initData();
-    }
-
-    protected void onBeforeSetContentView() {
     }
 
     @Override
@@ -172,14 +128,27 @@ public abstract class BaseActivity<P extends IPresenter> extends SupportActivity
             mPresenter.onDestroy();//释放资源
             this.mPresenter = null;
         }
-
-        if (mUnbinder != Unbinder.EMPTY) {
-            mUnbinder.unbind();
-            this.mUnbinder = null;
-        }
-        this.mImageLoader = null;
-        this.mApp = null;
         super.onDestroy();
+    }
+
+    /**
+     * 是否使用eventBus,默认为使用(true)，
+     *
+     * @return
+     */
+    @Override
+    public boolean useEventBus() {
+        return true;
+    }
+
+    /**
+     * 这个Activity是否会使用Fragment,框架会根据这个属性判断是否注册{@link android.support.v4.app.FragmentManager.FragmentLifecycleCallbacks}
+     * 如果返回false,那意味着这个Activity不需要绑定Fragment,那你再在这个Activity中绑定继承于 {@link com.jess.arms.base.BaseFragment} 的Fragment将不起任何作用
+     * @return
+     */
+    @Override
+    public boolean useFragment() {
+        return true;
     }
 
     /**

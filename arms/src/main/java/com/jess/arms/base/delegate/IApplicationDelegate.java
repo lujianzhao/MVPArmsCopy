@@ -1,4 +1,4 @@
-package com.jess.arms.base;
+package com.jess.arms.base.delegate;
 
 import com.jess.arms.di.component.AppComponent;
 
@@ -7,6 +7,6 @@ import com.jess.arms.di.component.AppComponent;
  * @date: 25/04/2017 16:22
  * @Description:
  */
-public interface App {
+public interface IApplicationDelegate {
     AppComponent getAppComponent();
 }

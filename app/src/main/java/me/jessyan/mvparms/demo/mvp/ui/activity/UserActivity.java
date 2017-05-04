@@ -40,16 +40,21 @@ public class UserActivity extends BaseActivity<UserContract.Presenter> implement
 
 
     @Override
-    protected void initView() {
+    public void initView() {
     }
 
     @Override
-    protected  int getContentViewId() {
+    public  int getContentViewId() {
         return R.layout.activity_user;
     }
 
     @Override
-    protected void setupActivityComponent(AppComponent appComponent) {
+    public void onBeforeSetContentView() {
+
+    }
+
+    @Override
+    public void setupActivityComponent(AppComponent appComponent) {
         this.mRxPermissions = new RxPermissions(this);
         DaggerUserComponent
                 .builder()
@@ -60,7 +65,7 @@ public class UserActivity extends BaseActivity<UserContract.Presenter> implement
     }
 
     @Override
-    protected void initData() {
+    public void initData() {
         mPresenter.requestUsers(true);//打开app时自动加载列表
     }
 

@@ -3,6 +3,7 @@ package com.jess.arms.base;
 import android.support.multidex.MultiDexApplication;
 
 import com.jess.arms.base.delegate.ApplicationDelegate;
+import com.jess.arms.base.delegate.IApplicationDelegate;
 import com.jess.arms.di.component.AppComponent;
 
 
@@ -15,7 +16,7 @@ import com.jess.arms.di.component.AppComponent;
  * +androideventbus
  * +butterknife组成
  */
-public abstract class BaseApplication extends MultiDexApplication implements App{
+public abstract class BaseApplication extends MultiDexApplication implements IApplicationDelegate {
 
     private ApplicationDelegate mApplicationDelegate;
 

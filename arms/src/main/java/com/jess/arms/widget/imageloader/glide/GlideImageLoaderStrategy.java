@@ -11,9 +11,6 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.Target;
 import com.jess.arms.widget.imageloader.BaseImageLoaderStrategy;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
@@ -23,12 +20,7 @@ import io.reactivex.schedulers.Schedulers;
  * Created by jess on 8/5/16 16:28
  * contact with jess.yan.effort@gmail.com
  */
-@Singleton
 public class GlideImageLoaderStrategy implements BaseImageLoaderStrategy<GlideImageConfig> {
-
-    @Inject
-    public GlideImageLoaderStrategy() {
-    }
 
     @Override
     public void loadImage(Context ctx, GlideImageConfig config) {
@@ -107,7 +99,5 @@ public class GlideImageLoaderStrategy implements BaseImageLoaderStrategy<GlideIm
         if (config.isClearMemory()) {//清除内存缓存
             Glide.get(ctx).clearMemory();
         }
-
-
     }
 }

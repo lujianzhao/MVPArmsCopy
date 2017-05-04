@@ -1,5 +1,8 @@
 package com.jess.arms.di.module;
 
+import android.app.Application;
+import android.content.Context;
+
 import com.jess.arms.common.utils.FileUtil;
 import com.jess.arms.http.IGlobalHttpHandler;
 import com.jess.arms.http.RequestInterceptor;
@@ -42,27 +45,25 @@ public class ClientModule {
      */
     @Singleton
     @Provides
-    Retrofit provideRetrofit(Retrofit.Builder builder, OkHttpClient client, HttpUrl httpUrl) {
-        return builder
-                .baseUrl(httpUrl)//域名
+    Retrofit provideRetrofit(Application application, RetrofitConfiguration configuration, Retrofit.Builder builder, OkHttpClient client, HttpUrl httpUrl) {
+        builder.baseUrl(httpUrl)//域名
                 .client(client)//设置okhttp
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())//使用rxjava
-                .addConverterFactory(GsonConverterFactory.create())//使用Gson
-                .build();
+                .addConverterFactory(GsonConverterFactory.create());//使用Gson
+        configuration.configRetrofit(application, builder);
+        return builder.build();
     }
 
     /**
      * 提供OkhttpClient
      *
-     * @param okHttpClient
+     * @param builder
      * @return
      */
     @Singleton
     @Provides
-    OkHttpClient provideClient(OkHttpClient.Builder okHttpClient, Interceptor intercept
-            , List<Interceptor> interceptors, final IGlobalHttpHandler handler) {
-        OkHttpClient.Builder builder = okHttpClient
-                .connectTimeout(TIME_OUT, TimeUnit.SECONDS)
+    OkHttpClient provideClient(Application application, OkhttpConfiguration configuration, OkHttpClient.Builder builder, Interceptor intercept, List<Interceptor> interceptors, final IGlobalHttpHandler handler) {
+         builder.connectTimeout(TIME_OUT, TimeUnit.SECONDS)
                 .readTimeout(TIME_OUT, TimeUnit.SECONDS)
                 .addInterceptor(new Interceptor() {
                     @Override
@@ -76,8 +77,8 @@ public class ClientModule {
                 builder.addInterceptor(interceptor);
             }
         }
-        return builder
-                .build();
+        configuration.configOkhttp(application, builder);
+        return builder.build();
     }
 
 
@@ -112,10 +113,10 @@ public class ClientModule {
      */
     @Singleton
     @Provides
-    RxCache provideRxCache(@Named("RxCacheDirectory") File cacheDirectory) {
-        return new RxCache
-                .Builder()
-                .persistence(cacheDirectory, new GsonSpeaker());
+    RxCache provideRxCache(Application application, RxCacheConfiguration configuration, @Named("RxCacheDirectory") File cacheDirectory) {
+        RxCache.Builder builder = new RxCache.Builder();
+        configuration.configRxCache(application, builder);
+        return builder.persistence(cacheDirectory, new GsonSpeaker());
     }
 
 
@@ -130,6 +131,40 @@ public class ClientModule {
         File cacheDirectory = new File(cacheDir, "RxCache");
         FileUtil.createDirs(cacheDirectory);
         return cacheDirectory;
+    }
+
+
+    public interface RetrofitConfiguration {
+        RetrofitConfiguration EMPTY = new RetrofitConfiguration() {
+            @Override
+            public void configRetrofit(Context context, Retrofit.Builder builder) {
+
+            }
+        };
+
+        void configRetrofit(Context context, Retrofit.Builder builder);
+    }
+
+    public interface OkhttpConfiguration {
+        OkhttpConfiguration EMPTY = new OkhttpConfiguration() {
+            @Override
+            public void configOkhttp(Context context, OkHttpClient.Builder builder) {
+
+            }
+        };
+
+        void configOkhttp(Context context, OkHttpClient.Builder builder);
+    }
+
+    public interface RxCacheConfiguration {
+        RxCacheConfiguration EMPTY = new RxCacheConfiguration() {
+            @Override
+            public void configRxCache(Context context, RxCache.Builder builder) {
+
+            }
+        };
+
+        void configRxCache(Context context, RxCache.Builder builder);
     }
 
 

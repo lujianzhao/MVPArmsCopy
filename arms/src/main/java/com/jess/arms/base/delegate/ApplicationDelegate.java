@@ -8,7 +8,6 @@ import com.jess.arms.di.component.DaggerAppComponent;
 import com.jess.arms.di.module.AppModule;
 import com.jess.arms.di.module.ClientModule;
 import com.jess.arms.di.module.GlobalConfigModule;
-import com.jess.arms.di.module.ImageModule;
 import com.jess.arms.integration.ActivityLifecycle;
 import com.jess.arms.integration.AppManager;
 import com.jess.arms.integration.ConfigModule;
@@ -27,26 +26,26 @@ import javax.inject.Inject;
  * @date: 25/04/2017 10:14
  * @Description:
  */
-public class ApplicationDelegate {
+public class ApplicationDelegate implements IApplicationDelegate {
     private Application mApplication;
     private AppComponent mAppComponent;
     private AppModule mAppModule;
     private GlobalConfigModule mGlobalConfigModule;
-
     @Inject
     protected ActivityLifecycle mActivityLifecycle;
-
     private final List<ConfigModule> mModules;
-
-    private List<Lifecycle> mLifecycles = new ArrayList<>();
+    private List<Lifecycle> mAppLifecycles = new ArrayList<>();
+    private List<Application.ActivityLifecycleCallbacks> mActivityLifecycles = new ArrayList<>();
 
     public ApplicationDelegate(Application application) {
         this.mApplication = application;
 
         AutoLayoutConifg.getInstance().useDeviceSize().init(application);
+
         this.mModules = new ManifestParser(mApplication).parse();
         for (ConfigModule module : mModules) {
-            module.injectAppLifecycle(mApplication, mLifecycles);
+            module.injectAppLifecycle(mApplication, mAppLifecycles);
+            module.injectActivityLifecycle(mApplication, mActivityLifecycles);
         }
     }
 
@@ -59,40 +58,62 @@ public class ApplicationDelegate {
                 .builder()
                 .appModule(mAppModule)////提供application
                 .clientModule(new ClientModule())//用于提供okhttp和retrofit的单例
-                .imageModule(new ImageModule())//图片加载框架默认使用glide
                 .globalConfigModule(mGlobalConfigModule)//全局配置
                 .build();
         mAppComponent.inject(this);
+
+        mAppComponent.extras().put(ConfigModule.class.getName(), mModules);
 
         mApplication.registerActivityLifecycleCallbacks(mActivityLifecycle);
 
         //注册网络状态广播
         NetworkStateReceiver.registerNetworkStateReceiver(mApplication);
 
+        for (Application.ActivityLifecycleCallbacks lifecycle : mActivityLifecycles) {
+            mApplication.registerActivityLifecycleCallbacks(lifecycle);
+        }
+
         for (ConfigModule module : mModules) {
             module.registerComponents(mApplication, mAppComponent.getRepositoryManager());
         }
 
-
-        for (Lifecycle lifecycle : mLifecycles) {
+        for (Lifecycle lifecycle : mAppLifecycles) {
             lifecycle.onCreate(mApplication);
         }
     }
 
 
     public void onTerminate() {
-        if (mLifecycles != null) {
-            for (Lifecycle lifecycle : mLifecycles) {
+        //注销网络状态广播
+        NetworkStateReceiver.unRegisterNetworkStateReceiver(mApplication);
+
+
+        if (mActivityLifecycle != null) {
+            mApplication.unregisterActivityLifecycleCallbacks(mActivityLifecycle);
+            mActivityLifecycle.release();
+            mActivityLifecycle = null;
+        }
+
+        if (mActivityLifecycles != null) {
+            for (Application.ActivityLifecycleCallbacks lifecycle : mActivityLifecycles) {
+                mApplication.unregisterActivityLifecycleCallbacks(lifecycle);
+            }
+            mActivityLifecycles.clear();
+            mActivityLifecycles = null;
+        }
+
+
+        if (mAppLifecycles != null) {
+            for (Lifecycle lifecycle : mAppLifecycles) {
                 lifecycle.onTerminate(mApplication);
             }
-            mLifecycles.clear();
-            mLifecycles = null;
+            mAppLifecycles.clear();
+            mAppLifecycles = null;
         }
 
         HandlerUtil.removeCallbacksAndMessages();
 
-        //注销网络状态广播
-        NetworkStateReceiver.unRegisterNetworkStateReceiver(mApplication);
+
 
         if (mGlobalConfigModule != null) {
             mGlobalConfigModule.release();
@@ -104,13 +125,6 @@ public class ApplicationDelegate {
             mAppModule.release();
             mAppModule = null;
         }
-
-        if (mActivityLifecycle != null) {
-            mApplication.unregisterActivityLifecycleCallbacks(mActivityLifecycle);
-            mActivityLifecycle.release();
-            mActivityLifecycle = null;
-        }
-
 
         if (mAppComponent != null) {
             AppManager appManager = mAppComponent.getAppManager();
@@ -137,8 +151,7 @@ public class ApplicationDelegate {
     private GlobalConfigModule getGlobeConfigModule(Application context, List<ConfigModule> modules) {
 
         GlobalConfigModule.Builder builder = GlobalConfigModule
-                .builder()
-                .baseurl("https://api.github.com");//为了防止用户没有通过GlobeConfigModule配置baseurl,而导致报错,所以提前配置个默认baseurl
+                .builder();
 
         for (ConfigModule module : modules) {
             module.applyOptions(context, builder);

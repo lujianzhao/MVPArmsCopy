@@ -3,14 +3,14 @@ package com.jess.arms.base;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.CheckResult;
-import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.jess.arms.di.component.AppComponent;
+import com.apkfuns.logutils.LogUtils;
+import com.jess.arms.base.delegate.IFragment;
 import com.jess.arms.mvp.IPresenter;
 import com.trello.rxlifecycle2.LifecycleProvider;
 import com.trello.rxlifecycle2.LifecycleTransformer;
@@ -29,29 +29,21 @@ import me.yokeyword.fragmentation.SupportFragment;
 /**
  * Created by jess on 2015/12/8.
  */
-public abstract class BaseFragment<P extends IPresenter> extends SupportFragment implements LifecycleProvider<FragmentEvent> {
+public abstract class BaseFragment<P extends IPresenter> extends SupportFragment implements IFragment, LifecycleProvider<FragmentEvent> {
 
     private final BehaviorSubject<FragmentEvent> lifecycleSubject = BehaviorSubject.create();
 
-    protected BaseActivity mActivity;
     protected View mRootView;
+
+    private Unbinder mUnbinder;
 
     @Inject
     protected P mPresenter;
-    private Unbinder mUnbinder;
 
-    @LayoutRes
-    protected abstract int getContentViewId();
-
-    /**
-     * 提供AppComponent(提供所有的单例对象)给子类，进行Component依赖
-     * @param appComponent
-     */
-    protected abstract void setupFragmentComponent(AppComponent appComponent);
-
-    protected abstract void initView();
-
-    protected abstract void initData();
+    public BaseFragment() {
+        //必须确保在Fragment实例化时setArguments()
+        setArguments(new Bundle());
+    }
 
     @Override
     @NonNull
@@ -111,14 +103,6 @@ public abstract class BaseFragment<P extends IPresenter> extends SupportFragment
     }
 
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        mActivity = (BaseActivity) getActivity();
-        setupFragmentComponent(mActivity.mApp.getAppComponent());
-        initData();
-    }
-
-    @Override
     public void onStart() {
         super.onStart();
         lifecycleSubject.onNext(FragmentEvent.START);
@@ -145,10 +129,6 @@ public abstract class BaseFragment<P extends IPresenter> extends SupportFragment
     @Override
     public void onDestroyView() {
         lifecycleSubject.onNext(FragmentEvent.DESTROY_VIEW);
-
-        if (mUnbinder != Unbinder.EMPTY) {
-            mUnbinder.unbind();
-        }
         super.onDestroyView();
     }
 
@@ -162,10 +142,18 @@ public abstract class BaseFragment<P extends IPresenter> extends SupportFragment
             this.mPresenter = null;
         }
 
-        this.mActivity = null;
-        this.mRootView = null;
-        this.mUnbinder = null;
+        if (mUnbinder != null && mUnbinder != mUnbinder.EMPTY) {
+            try {
+                mUnbinder.unbind();
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+                //fix Bindings already cleared
+                LogUtils.e("Fragment onDestroyView: " + e.getMessage());
+            }
+            mUnbinder = null;
+        }
 
+        this.mRootView = null;
         super.onDestroy();
     }
 
@@ -175,22 +163,5 @@ public abstract class BaseFragment<P extends IPresenter> extends SupportFragment
         super.onDetach();
     }
 
-
-
-    /**
-     * 此方法是让外部调用使fragment做一些操作的,比如说外部的activity想让fragment对象执行一些方法,
-     * 建议在有多个需要让外界调用的方法时,统一传bundle,里面存一个what字段,来区分不同的方法,在setData
-     * 方法中就可以switch做不同的操作,这样就可以用统一的入口方法做不同的事,和message同理
-     * <p>
-     * 使用此方法时请注意调用时fragment的生命周期,如果调用此setData方法时onActivityCreated
-     * 还没执行,setData里调用presenter的方法时,是会报空的,因为dagger注入是在onActivityCreated
-     * 方法中执行的,如果要做一些初始化操作,可以不必让外部调setData,在内部onActivityCreated中
-     * 初始化就可以了
-     *
-     * @param data
-     */
-    public void setData(Object data) {
-
-    }
 
 }

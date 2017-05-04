@@ -1,11 +1,16 @@
 package com.jess.arms.di.module;
 
 import android.app.Application;
+import android.content.Context;
+import android.support.v4.util.ArrayMap;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.jess.arms.common.data.DataKeeper;
 import com.jess.arms.integration.IRepositoryManager;
 import com.jess.arms.integration.RepositoryManager;
+
+import java.util.Map;
 
 import javax.inject.Singleton;
 
@@ -17,7 +22,6 @@ import dagger.Provides;
  */
 @Module
 public class AppModule {
-    private static final String SP_FILE_NAME ="config";
 
     private Application mApplication;
 
@@ -40,20 +44,39 @@ public class AppModule {
 
     @Singleton
     @Provides
-    public Gson provideGson() {
-        return new Gson();
+    public Gson provideGson(Application application, GsonConfiguration configuration){
+        GsonBuilder builder = new GsonBuilder();
+        configuration.configGson(application, builder);
+        return builder.create();
     }
 
     @Singleton
     @Provides
     public DataKeeper provideDataKeeper(Application application) {
-        return new DataKeeper(application,SP_FILE_NAME);
+        return new DataKeeper(application,"config");
     }
 
     @Singleton
     @Provides
     public IRepositoryManager provideRepositoryManager(RepositoryManager repositoryManager) {
         return repositoryManager;
+    }
+
+    @Singleton
+    @Provides
+    public Map<String, Object> provideExtras(){
+        return new ArrayMap<>();
+    }
+
+    public interface GsonConfiguration {
+        GsonConfiguration EMPTY = new GsonConfiguration() {
+            @Override
+            public void configGson(Context context, GsonBuilder builder) {
+
+            }
+        };
+
+        void configGson(Context context, GsonBuilder builder);
     }
 
 

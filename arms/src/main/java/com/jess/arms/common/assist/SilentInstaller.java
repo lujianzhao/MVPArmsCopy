@@ -272,7 +272,7 @@ public class SilentInstaller {
 //    private static final String TAG = SilentInstaller.class.getSimpleName();
 
     /**
-     * App installation location flags of android system
+     * IApplicationDelegate installation location flags of android system
      */
     public static final int APP_INSTALL_AUTO     = 0;
     public static final int APP_INSTALL_INTERNAL = 1;

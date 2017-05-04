@@ -1,10 +1,12 @@
 package com.jess.arms.di.module;
 
 import android.app.Application;
+import android.text.TextUtils;
 
-import com.jess.arms.common.assist.Check;
 import com.jess.arms.common.utils.FileUtil;
 import com.jess.arms.http.IGlobalHttpHandler;
+import com.jess.arms.widget.imageloader.BaseImageLoaderStrategy;
+import com.jess.arms.widget.imageloader.glide.GlideImageLoaderStrategy;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -23,9 +25,14 @@ import okhttp3.Interceptor;
 @Module
 public class GlobalConfigModule {
     private HttpUrl mApiUrl;
+    private BaseImageLoaderStrategy mLoaderStrategy;
     private IGlobalHttpHandler mHandler;
     private List<Interceptor> mInterceptors;
     private File mCacheFile;
+    private ClientModule.RetrofitConfiguration mRetrofitConfiguration;
+    private ClientModule.OkhttpConfiguration mOkhttpConfiguration;
+    private ClientModule.RxCacheConfiguration mRxCacheConfiguration;
+    private AppModule.GsonConfiguration mGsonConfiguration;
 
     /**
      * @author: jess
@@ -34,9 +41,14 @@ public class GlobalConfigModule {
      */
     private GlobalConfigModule(Builder builder) {
         this.mApiUrl = builder.apiUrl;
+        this.mLoaderStrategy = builder.loaderStrategy;
         this.mHandler = builder.handler;
         this.mInterceptors = builder.interceptors;
         this.mCacheFile = builder.cacheFile;
+        this.mRetrofitConfiguration = builder.retrofitConfiguration;
+        this.mOkhttpConfiguration = builder.okhttpConfiguration;
+        this.mRxCacheConfiguration = builder.rxCacheConfiguration;
+        this.mGsonConfiguration = builder.gsonConfiguration;
     }
 
     /**
@@ -44,12 +56,17 @@ public class GlobalConfigModule {
      */
     public void release() {
         mApiUrl = null;
+        mLoaderStrategy = null;
         mHandler = null;
         if (mInterceptors != null) {
             mInterceptors.clear();
             mInterceptors = null;
         }
         mCacheFile = null;
+        mRetrofitConfiguration = null;
+        mOkhttpConfiguration = null;
+        mRxCacheConfiguration = null;
+        mGsonConfiguration = null;
     }
 
     public static Builder builder() {
@@ -67,16 +84,20 @@ public class GlobalConfigModule {
     @Singleton
     @Provides
     HttpUrl provideBaseUrl() {
-        return mApiUrl;
+        return mApiUrl == null ? HttpUrl.parse("https://api.github.com/") : mApiUrl;
     }
-
 
     @Singleton
     @Provides
-    IGlobalHttpHandler provideGlobeHttpHandler() {
-        return mHandler == null ? IGlobalHttpHandler.EMPTY : mHandler;//打印请求信息
+    BaseImageLoaderStrategy provideImageLoaderStrategy() {//图片加载框架默认使用glide
+        return mLoaderStrategy == null ? new GlideImageLoaderStrategy() : mLoaderStrategy;
     }
 
+    @Singleton
+    @Provides
+    IGlobalHttpHandler provideGlobalHttpHandler() {
+        return mHandler == null ? IGlobalHttpHandler.EMPTY : mHandler;//打印请求信息
+    }
 
     /**
      * 提供缓存地址
@@ -90,25 +111,59 @@ public class GlobalConfigModule {
         return mCacheFile;
     }
 
+    @Singleton
+    @Provides
+    ClientModule.RetrofitConfiguration provideRetrofitConfiguration() {
+        return mRetrofitConfiguration == null ? ClientModule.RetrofitConfiguration.EMPTY : mRetrofitConfiguration;
+    }
+
+    @Singleton
+    @Provides
+    ClientModule.OkhttpConfiguration provideOkhttpConfiguration() {
+        return mOkhttpConfiguration == null ? ClientModule.OkhttpConfiguration.EMPTY : mOkhttpConfiguration;
+    }
+
+    @Singleton
+    @Provides
+    ClientModule.RxCacheConfiguration provideRxCacheConfiguration() {
+        return mRxCacheConfiguration == null ? ClientModule.RxCacheConfiguration.EMPTY : mRxCacheConfiguration;
+    }
+
+    @Singleton
+    @Provides
+    AppModule.GsonConfiguration provideGsonConfiguration() {
+        return mGsonConfiguration == null ? AppModule.GsonConfiguration.EMPTY : mGsonConfiguration;
+    }
+
     public static final class Builder {
 
-        private HttpUrl apiUrl = HttpUrl.parse("https://api.github.com/");
+        private HttpUrl apiUrl;
+        private BaseImageLoaderStrategy loaderStrategy;
         private IGlobalHttpHandler handler;
         private List<Interceptor> interceptors = new ArrayList<>();
         private File cacheFile;
+        private ClientModule.RetrofitConfiguration retrofitConfiguration;
+        private ClientModule.OkhttpConfiguration okhttpConfiguration;
+        private ClientModule.RxCacheConfiguration rxCacheConfiguration;
+        private AppModule.GsonConfiguration gsonConfiguration;
 
         private Builder() {
         }
 
         public Builder baseurl(String baseurl) {//基础url
-            if (Check.isEmpty(baseurl)) {
+            if (TextUtils.isEmpty(baseurl)) {
                 throw new IllegalArgumentException("baseurl can not be empty");
             }
             this.apiUrl = HttpUrl.parse(baseurl);
             return this;
         }
 
-        public Builder globeHttpHandler(IGlobalHttpHandler handler) {//用来处理http响应结果
+        public Builder imageLoaderStrategy(BaseImageLoaderStrategy loaderStrategy) {//用来请求网络图片
+            this.loaderStrategy = loaderStrategy;
+            return this;
+        }
+
+        public Builder globalHttpHandler(IGlobalHttpHandler handler) {//用来处理http响应结果
             this.handler = handler;
             return this;
         }
@@ -123,11 +178,28 @@ public class GlobalConfigModule {
             return this;
         }
 
+        public Builder retrofitConfiguration(ClientModule.RetrofitConfiguration retrofitConfiguration) {
+            this.retrofitConfiguration = retrofitConfiguration;
+            return this;
+        }
+
+        public Builder okhttpConfiguration(ClientModule.OkhttpConfiguration okhttpConfiguration) {
+            this.okhttpConfiguration = okhttpConfiguration;
+            return this;
+        }
+
+        public Builder rxCacheConfiguration(ClientModule.RxCacheConfiguration rxCacheConfiguration) {
+            this.rxCacheConfiguration = rxCacheConfiguration;
+            return this;
+        }
+
+        public Builder gsonConfiguration(AppModule.GsonConfiguration gsonConfiguration) {
+            this.gsonConfiguration = gsonConfiguration;
+            return this;
+        }
+
 
         public GlobalConfigModule build() {
-            if (apiUrl == null) {
-                throw new NullPointerException("baseurl is required");
-            }
             return new GlobalConfigModule(this);
         }
 

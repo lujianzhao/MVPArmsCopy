@@ -50,6 +50,8 @@ public class RepositoryManager implements IRepositoryManager {
             mCacheServiceCache = null;
         }
         mRxCache = null;
+
+        mDataKeeper = null;
     }
 
     @Override
