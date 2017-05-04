@@ -45,7 +45,7 @@ public abstract class BaseActivity<P extends IPresenter> extends SupportActivity
 
     private final BehaviorSubject<ActivityEvent> lifecycleSubject = BehaviorSubject.create();
 
-    protected BaseApplication mApplication;
+    protected App mApp;
 
     private Unbinder mUnbinder;
 
@@ -120,13 +120,13 @@ public abstract class BaseActivity<P extends IPresenter> extends SupportActivity
             //新版本的转场动画
             getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
         }
-        mApplication = (BaseApplication) getApplication();
+        mApp = (App) getApplication();
 
         onBeforeSetContentView();
         setContentView(getContentViewId());
         //绑定到butterknife
         mUnbinder = ButterKnife.bind(this);
-        setupActivityComponent(mApplication.getAppComponent());//依赖注入
+        setupActivityComponent(mApp.getAppComponent());//依赖注入
 
         lifecycleSubject.onNext(ActivityEvent.CREATE);
 
@@ -178,7 +178,7 @@ public abstract class BaseActivity<P extends IPresenter> extends SupportActivity
             this.mUnbinder = null;
         }
         this.mImageLoader = null;
-        this.mApplication = null;
+        this.mApp = null;
         super.onDestroy();
     }
 

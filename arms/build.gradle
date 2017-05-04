@@ -109,6 +109,8 @@ dependencies {
 
     //test
     testCompile rootProject.ext.dependencies["junit"]
-    compile rootProject.ext.dependencies["logutils-release"]
+    provided rootProject.ext.dependencies["logutils-release"]
+
+
 
 }

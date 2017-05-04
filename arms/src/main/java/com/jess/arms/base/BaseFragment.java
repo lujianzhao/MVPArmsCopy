@@ -114,7 +114,7 @@ public abstract class BaseFragment<P extends IPresenter> extends SupportFragment
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         mActivity = (BaseActivity) getActivity();
-        setupFragmentComponent(mActivity.mApplication.getAppComponent());
+        setupFragmentComponent(mActivity.mApp.getAppComponent());
         initData();
     }
 

@@ -38,11 +38,11 @@ import static com.apkfuns.logutils.LogUtils.w;
  */
 @Singleton
 public class RequestInterceptor implements Interceptor {
-    private IGlobeHttpHandler mHandler;
+    private IGlobalHttpHandler mHandler;
     private String mUserAgent;
 
     @Inject
-    public RequestInterceptor(Application context,IGlobeHttpHandler handler) {
+    public RequestInterceptor(Application context,IGlobalHttpHandler handler) {
         this.mHandler = handler;
         this.mUserAgent = getUserAgent(context);
     }

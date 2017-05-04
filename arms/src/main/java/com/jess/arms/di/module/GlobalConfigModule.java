@@ -4,7 +4,7 @@ import android.app.Application;
 
 import com.jess.arms.common.assist.Check;
 import com.jess.arms.common.utils.FileUtil;
-import com.jess.arms.http.IGlobeHttpHandler;
+import com.jess.arms.http.IGlobalHttpHandler;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -21,9 +21,9 @@ import okhttp3.Interceptor;
  * Created by jessyan on 2016/3/14.
  */
 @Module
-public class GlobeConfigModule {
+public class GlobalConfigModule {
     private HttpUrl mApiUrl;
-    private IGlobeHttpHandler mHandler;
+    private IGlobalHttpHandler mHandler;
     private List<Interceptor> mInterceptors;
     private File mCacheFile;
 
@@ -32,7 +32,7 @@ public class GlobeConfigModule {
      * @date 8/5/16 11:03 AM
      * @description: 设置baseurl
      */
-    private GlobeConfigModule(Builder builder) {
+    private GlobalConfigModule(Builder builder) {
         this.mApiUrl = builder.apiUrl;
         this.mHandler = builder.handler;
         this.mInterceptors = builder.interceptors;
@@ -73,8 +73,8 @@ public class GlobeConfigModule {
 
     @Singleton
     @Provides
-    IGlobeHttpHandler provideGlobeHttpHandler() {
-        return mHandler == null ? IGlobeHttpHandler.EMPTY : mHandler;//打印请求信息
+    IGlobalHttpHandler provideGlobeHttpHandler() {
+        return mHandler == null ? IGlobalHttpHandler.EMPTY : mHandler;//打印请求信息
     }
 
 
@@ -93,7 +93,7 @@ public class GlobeConfigModule {
     public static final class Builder {
 
         private HttpUrl apiUrl = HttpUrl.parse("https://api.github.com/");
-        private IGlobeHttpHandler handler;
+        private IGlobalHttpHandler handler;
         private List<Interceptor> interceptors = new ArrayList<>();
         private File cacheFile;
 
@@ -108,7 +108,7 @@ public class GlobeConfigModule {
             return this;
         }
 
-        public Builder globeHttpHandler(IGlobeHttpHandler handler) {//用来处理http响应结果
+        public Builder globeHttpHandler(IGlobalHttpHandler handler) {//用来处理http响应结果
             this.handler = handler;
             return this;
         }
@@ -124,11 +124,11 @@ public class GlobeConfigModule {
         }
 
 
-        public GlobeConfigModule build() {
+        public GlobalConfigModule build() {
             if (apiUrl == null) {
                 throw new NullPointerException("baseurl is required");
             }
-            return new GlobeConfigModule(this);
+            return new GlobalConfigModule(this);
         }
 
 

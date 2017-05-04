@@ -95,6 +95,7 @@ dependencies {
     testCompile rootProject.ext.dependencies["canary-release"]
     debugCompile rootProject.ext.dependencies["recovery-debug"]
     releaseCompile rootProject.ext.dependencies["recovery-release"]
+
     debugCompile rootProject.ext.dependencies["logutils-debug"]
     releaseCompile rootProject.ext.dependencies["logutils-release"]
 }

@@ -4,8 +4,9 @@ import android.content.Context;
 import android.text.TextUtils;
 
 import com.apkfuns.logutils.LogUtils;
-import com.jess.arms.di.module.GlobeConfigModule;
-import com.jess.arms.http.IGlobeHttpHandler;
+import com.jess.arms.base.delegate.ApplicationDelegate;
+import com.jess.arms.di.module.GlobalConfigModule;
+import com.jess.arms.http.IGlobalHttpHandler;
 import com.jess.arms.http.RequestInterceptor;
 import com.jess.arms.integration.ConfigModule;
 import com.jess.arms.integration.IRepositoryManager;
@@ -13,6 +14,8 @@ import com.jess.arms.integration.IRepositoryManager;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.List;
 
 import me.jessyan.mvparms.demo.mvp.model.api.Api;
 import me.jessyan.mvparms.demo.mvp.model.api.cache.CommonCache;
@@ -32,9 +35,9 @@ import okhttp3.Response;
 public class GlobalConfiguration implements ConfigModule {
 
     @Override
-    public void applyOptions(Context context, GlobeConfigModule.Builder builder) {
+    public void applyOptions(Context context, GlobalConfigModule.Builder builder) {
         builder.baseurl(Api.APP_DOMAIN)
-                .globeHttpHandler(new IGlobeHttpHandler() {// 这里可以提供一个全局处理Http请求和响应结果的处理类,
+                .globeHttpHandler(new IGlobalHttpHandler() {// 这里可以提供一个全局处理Http请求和响应结果的处理类,
                     // 这里可以比客户端提前一步拿到服务器返回的结果,可以做一些操作,比如token超时,重新获取
                     @Override
                     public Response onHttpResultResponse(String httpResult, Interceptor.Chain chain, Response response) {
@@ -85,5 +88,11 @@ public class GlobalConfiguration implements ConfigModule {
     public void registerComponents(Context context, IRepositoryManager repositoryManager) {
         repositoryManager.injectRetrofitService(CommonService.class, UserService.class);
         repositoryManager.injectCacheService(CommonCache.class);
+    }
+
+    @Override
+    public void injectAppLifecycle(Context context, List<ApplicationDelegate.Lifecycle> lifecycles) {
+        // ApplicationDelegate.Lifecycle 的所有方法都会在BaseApplication对应的生命周期中被调用,所以在对应的方法中可以扩展一些自己需要的逻辑
+        lifecycles.add(new WELifecycle());
     }
 }

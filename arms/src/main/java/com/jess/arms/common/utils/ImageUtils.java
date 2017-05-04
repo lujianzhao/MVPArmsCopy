@@ -23,6 +23,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
@@ -75,10 +78,7 @@ public class ImageUtils {
 
         final Context context = activity.getApplication();
 
-        return new RxPermissions(activity).request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                .subscribeOn(AndroidSchedulers.mainThread())
-                .observeOn(Schedulers.io())
-                .flatMap(new Function<Boolean, ObservableSource<File>>() {
+        return new RxPermissions(activity).request(Manifest.permission.WRITE_EXTERNAL_STORAGE).subscribeOn(AndroidSchedulers.mainThread()).observeOn(Schedulers.io()).flatMap(new Function<Boolean, ObservableSource<File>>() {
             @Override
             public ObservableSource<File> apply(Boolean granted) throws Exception {
                 File file = Glide.with(context).load(url).downloadOnly(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL).get();
@@ -88,12 +88,11 @@ public class ImageUtils {
                 } else {
                     desPath = FileUtil.getIconDir(context);
                 }
-                file = savePhotoToSDCard(context, file.getAbsolutePath(),desPath);
+                file = savePhotoToSDCard(context, file.getAbsolutePath(), desPath);
 
                 return Observable.just(file);
             }
         }).observeOn(AndroidSchedulers.mainThread());
-
 
 
 //        return Observable.create(new ObservableOnSubscribe<File>() {
@@ -132,14 +131,9 @@ public class ImageUtils {
      * @param path
      * @param desPath
      */
-    private static File savePhotoToSDCard(Context context,String path, String desPath) throws IOException {
-        File dir = new File(desPath);
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        String fileName = System.currentTimeMillis() + ".jpg";
-        File currentFile = new File(dir.getAbsolutePath(), fileName);
+    private static File savePhotoToSDCard(Context context, String path, String desPath) throws IOException {
 
+        File currentFile = createFile( new File(desPath),"IMG_", ".jpg");
 
         ByteArrayOutputStream baos = null;
         FileOutputStream fOut = null;
@@ -158,6 +152,8 @@ public class ImageUtils {
             fOut.write(baos.toByteArray());
             fOut.flush();
             baos.flush();
+
+            context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(currentFile)));
         } finally {
             IOUtils.closeQuietly(fOut);
             fOut = null;
@@ -170,8 +166,15 @@ public class ImageUtils {
                 bitmap = null;
             }
         }
-
-        context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(currentFile)));
         return currentFile;
+    }
+
+    private static File createFile(File folder, String prefix, String suffix) {
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.CHINA);
+        String filename = prefix + dateFormat.format(new Date(System.currentTimeMillis())) + suffix;
+        return new File(folder, filename);
     }
 }

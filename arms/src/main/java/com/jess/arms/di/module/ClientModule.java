@@ -1,7 +1,7 @@
 package com.jess.arms.di.module;
 
 import com.jess.arms.common.utils.FileUtil;
-import com.jess.arms.http.IGlobeHttpHandler;
+import com.jess.arms.http.IGlobalHttpHandler;
 import com.jess.arms.http.RequestInterceptor;
 
 import java.io.File;
@@ -60,7 +60,7 @@ public class ClientModule {
     @Singleton
     @Provides
     OkHttpClient provideClient(OkHttpClient.Builder okHttpClient, Interceptor intercept
-            , List<Interceptor> interceptors, final IGlobeHttpHandler handler) {
+            , List<Interceptor> interceptors, final IGlobalHttpHandler handler) {
         OkHttpClient.Builder builder = okHttpClient
                 .connectTimeout(TIME_OUT, TimeUnit.SECONDS)
                 .readTimeout(TIME_OUT, TimeUnit.SECONDS)

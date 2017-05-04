@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.Message;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.RecyclerView;
 import android.text.SpannableString;
@@ -18,8 +19,6 @@ import android.view.ViewParent;
 import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.jess.arms.base.BaseApplication;
 
 import org.simple.eventbus.EventBus;
 
@@ -44,8 +43,8 @@ public class UiUtils {
      * @param v
      * @param res
      */
-    public static void setViewHintSize(int size, TextView v, int res) {
-        SpannableString ss = new SpannableString(getResources().getString(
+    public static void setViewHintSize(Context context,int size, TextView v, int res) {
+        SpannableString ss = new SpannableString(getResources(context).getString(
                 res));
         // 新建一个属性对象,设置文字的大小
         AbsoluteSizeSpan ass = new AbsoluteSizeSpan(size, true);
@@ -63,41 +62,41 @@ public class UiUtils {
      * @param dpValue
      * @return
      */
-    public static int dip2px(float dpValue) {
-        final float scale = BaseApplication.getContext().getResources().getDisplayMetrics().density;
+    public static int dip2px(Context context,float dpValue) {
+        final float scale = getResources(context).getDisplayMetrics().density;
         return (int) (dpValue * scale + 0.5f);
     }
 
     /**
      * 获得资源
      */
-    public static Resources getResources() {
-        return BaseApplication.getContext().getResources();
+    public static Resources getResources(Context context) {
+        return context.getResources();
     }
 
     /**
      * 得到字符数组
      */
-    public static String[] getStringArray(int id) {
-        return getResources().getStringArray(id);
+    public static String[] getStringArray(Context context,int id) {
+        return getResources(context).getStringArray(id);
     }
 
     /**
      * pix转dip
      */
-    public static int pix2dip(int pix) {
-        final float densityDpi = getResources().getDisplayMetrics().density;
+    public static int pix2dip(Context context,int pix) {
+        final float densityDpi = getResources(context).getDisplayMetrics().density;
         return (int) (pix / densityDpi + 0.5f);
     }
 
-    /**
-     * 获得上下文
-     *
-     * @return
-     */
-    public static Context getContext() {
-        return BaseApplication.getContext();
-    }
+//    /**
+//     * 获得上下文
+//     *
+//     * @return
+//     */
+//    public static Context getContext() {
+//        return BaseApplication.getContext();
+//    }
 
 
     /**
@@ -107,8 +106,8 @@ public class UiUtils {
      * @return
      */
 
-    public static int getDimens(int homePicHeight) {
-        return (int) getResources().getDimension(homePicHeight);
+    public static int getDimens(Context context,int homePicHeight) {
+        return (int) getResources(context).getDimension(homePicHeight);
     }
 
     /**
@@ -118,8 +117,8 @@ public class UiUtils {
      * @return
      */
 
-    public static float getDimens(String dimenNmae) {
-        return getResources().getDimension(getResources().getIdentifier(dimenNmae, "dimen", getContext().getPackageName()));
+    public static float getDimens(Context context,String dimenNmae) {
+        return getResources(context).getDimension(getResources(context).getIdentifier(dimenNmae, "dimen", context.getPackageName()));
     }
 
     /**
@@ -128,8 +127,8 @@ public class UiUtils {
      * @return
      */
 
-    public static String getString(int stringID) {
-        return getResources().getString(stringID);
+    public static String getString(Context context,int stringID) {
+        return getResources(context).getString(stringID);
     }
 
     /**
@@ -138,8 +137,8 @@ public class UiUtils {
      * @return
      */
 
-    public static String getString(String strName) {
-        return getString(getResources().getIdentifier(strName, "string", getContext().getPackageName()));
+    public static String getString(Context context,String strName) {
+        return getString(context,getResources(context).getIdentifier(strName, "string", context.getPackageName()));
     }
 
     /**
@@ -150,8 +149,8 @@ public class UiUtils {
      * @param <T>
      * @return
      */
-    public static <T extends View> T findViewByName(View view, String viewName) {
-        int id = getResources().getIdentifier(viewName, "id", getContext().getPackageName());
+    public static <T extends View> T findViewByName(Context context,View view, String viewName) {
+        int id = getResources(context).getIdentifier(viewName, "id", context.getPackageName());
         T v = (T) view.findViewById(id);
         return v;
     }
@@ -164,8 +163,8 @@ public class UiUtils {
      * @param <T>
      * @return
      */
-    public static <T extends View> T findViewByName(Activity activity, String viewName) {
-        int id = getResources().getIdentifier(viewName, "id", getContext().getPackageName());
+    public static <T extends View> T findViewByName(Context context,Activity activity, String viewName) {
+        int id = getResources(context).getIdentifier(viewName, "id", context.getPackageName());
         T v = (T) activity.findViewById(id);
         return v;
     }
@@ -176,8 +175,8 @@ public class UiUtils {
      * @param layoutName
      * @return
      */
-    public static int findLayout(String layoutName) {
-        int id = getResources().getIdentifier(layoutName, "layout", getContext().getPackageName());
+    public static int findLayout(Context context,String layoutName) {
+        int id = getResources(context).getIdentifier(layoutName, "layout", context.getPackageName());
         return id;
     }
 
@@ -187,8 +186,8 @@ public class UiUtils {
      * @param detailScreen
      * @return
      */
-    public static View inflate(int detailScreen) {
-        return View.inflate(getContext(), detailScreen, null);
+    public static View inflate(Context context,int detailScreen) {
+        return View.inflate(context, detailScreen, null);
     }
 
     /**
@@ -197,9 +196,9 @@ public class UiUtils {
      * @param string
      */
 
-    public static void makeText(String string) {
+    public static void makeText(Context context,String string) {
         if (mToast == null) {
-            mToast = Toast.makeText(getContext(), string, Toast.LENGTH_SHORT);
+            mToast = Toast.makeText(context, string, Toast.LENGTH_SHORT);
         }
         mToast.setText(string);
         mToast.show();
@@ -238,18 +237,18 @@ public class UiUtils {
      * @param rID
      * @return
      */
-    public static Drawable getDrawablebyResource(int rID) {
-        return getResources().getDrawable(rID);
+    public static Drawable getDrawablebyResource(Context context,int rID) {
+        return ContextCompat.getDrawable(context,rID);
     }
 
     /**
      * 跳转界面
      *
      * @param activity
-     * @param homeActivityClass
+     * @param activityClass
      */
-    public static void startActivity(Activity activity, Class homeActivityClass) {
-        Intent intent = new Intent(getContext(), homeActivityClass);
+    public static void startActivity(Activity activity, Class activityClass) {
+        Intent intent = new Intent(activity.getApplicationContext(), activityClass);
         activity.startActivity(intent);
     }
 
@@ -257,12 +256,12 @@ public class UiUtils {
      * 跳转界面3
      *
      * @param
-     * @param homeActivityClass
+     * @param activityClass
      */
-    public static void startActivity(Class homeActivityClass) {
+    public static void startActivity(Class activityClass) {
         Message message = new Message();
         message.what = START_ACTIVITY;
-        message.obj = homeActivityClass;
+        message.obj = activityClass;
         EventBus.getDefault().post(message, APPMANAGER_MESSAGE);
     }
 
@@ -287,8 +286,8 @@ public class UiUtils {
         activity.startActivity(intent);
     }
 
-    public static int getLayoutId(String layoutName) {
-        return getResources().getIdentifier(layoutName, "layout", getContext().getPackageName());
+    public static int getLayoutId(Context context,String layoutName) {
+        return getResources(context).getIdentifier(layoutName, "layout", context.getPackageName());
     }
 
     /**
@@ -296,8 +295,8 @@ public class UiUtils {
      *
      * @return
      */
-    public static int getScreenWidth() {
-        return getResources().getDisplayMetrics().widthPixels;
+    public static int getScreenWidth(Context context) {
+        return getResources(context).getDisplayMetrics().widthPixels;
     }
 
     /**
@@ -305,23 +304,23 @@ public class UiUtils {
      *
      * @return
      */
-    public static int getScreenHeidth() {
-        return getResources().getDisplayMetrics().heightPixels;
+    public static int getScreenHeidth(Context context) {
+        return getResources(context).getDisplayMetrics().heightPixels;
     }
 
 
     /**
      * 获得颜色
      */
-    public static int getColor(int rid) {
-        return getResources().getColor(rid);
+    public static int getColor(Context context,int rid) {
+        return ContextCompat.getColor(context,rid);
     }
 
     /**
      * 获得颜色
      */
-    public static int getColor(String colorName) {
-        return getColor(getResources().getIdentifier(colorName, "color", getContext().getPackageName()));
+    public static int getColor(Context context,String colorName) {
+        return getColor(context,getResources(context).getIdentifier(colorName, "color", context.getPackageName()));
     }
 
     /**
@@ -352,7 +351,7 @@ public class UiUtils {
      * @return
      * @throws Exception
      */
-    public static String MD5encode(String string) {
+    public static String encodeWithMD5(String string) {
         byte[] hash = new byte[0];
         try {
             hash = MessageDigest.getInstance("MD5").digest(
