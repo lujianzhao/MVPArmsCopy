@@ -26,20 +26,21 @@ public class ActivityDelegateImpl implements IActivityDelegate {
 
 
     public void onCreate(Bundle savedInstanceState) {
-        if (((IActivity)mActivity).useEventBus())//如果要使用eventbus请将此方法返回true
-            EventBus.getDefault().register(mActivity);//注册到事件主线
-
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             //新版本的转场动画
             mActivity.getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
         }
+        if (((IActivity)mActivity).useEventBus()) {
+            //如果要使用eventbus请将此方法返回true
+            EventBus.getDefault().register(mActivity);//注册到事件主线
+        }
+        ((IActivity)mActivity).setupActivityComponent(((IApplicationDelegate) mActivity.getApplication()).getAppComponent());//依赖注入
 
         ((IActivity)mActivity).onBeforeSetContentView();
 
         mActivity.setContentView(((IActivity)mActivity).getContentViewId());
         //绑定到butterknife
         mUnbinder = ButterKnife.bind(mActivity);
-        ((IActivity)mActivity).setupActivityComponent(((IApplicationDelegate) mActivity.getApplication()).getAppComponent());//依赖注入
         ((IActivity)mActivity).initView();
         ((IActivity)mActivity).initData();
     }
@@ -69,11 +70,12 @@ public class ActivityDelegateImpl implements IActivityDelegate {
         if (mUnbinder != Unbinder.EMPTY) {
             mUnbinder.unbind();
         }
+        this.mUnbinder = null;
+
         if (((IActivity)mActivity).useEventBus()) {
             //如果要使用eventbus请将此方法返回true
             EventBus.getDefault().unregister(mActivity);
         }
-        this.mUnbinder = null;
         this.mActivity = null;
     }
 

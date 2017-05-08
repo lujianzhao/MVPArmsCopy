@@ -43,12 +43,14 @@ public class UserPresenter extends PresenterImp<UserContract.Model, UserContract
     @Inject
     public UserPresenter(UserContract.Model model, UserContract.View rootView, AppComponent appComponent) {
         super(model, rootView, appComponent);
-        mAdapter = new UserAdapter(mUsers);
-        mRootView.setAdapter(mAdapter);//设置Adapter
     }
 
     @Override
     public void requestUsers(final boolean pullToRefresh) {
+        if (mAdapter == null) {
+            mAdapter = new UserAdapter(mUsers);
+            mRootView.setAdapter(mAdapter);//设置Adapter
+        }
 
         //请求外部存储权限用于适配android6.0的权限管理机制
 //        PermissionUtil.externalStorage(mRootView.getRxPermissions()).compose(RxUtils.<Boolean>bindToLifecycle(mRootView)).subscribe(new SimpleObserver<Boolean>() {

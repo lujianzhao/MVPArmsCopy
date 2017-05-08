@@ -20,7 +20,6 @@ import com.trello.rxlifecycle2.android.RxLifecycleAndroid;
 
 import javax.inject.Inject;
 
-import butterknife.ButterKnife;
 import butterknife.Unbinder;
 import io.reactivex.Observable;
 import io.reactivex.subjects.BehaviorSubject;
@@ -88,9 +87,6 @@ public abstract class BaseFragment<P extends IPresenter> extends SupportFragment
             }
         } else {
             mRootView = inflater.inflate(getContentViewId(), container, false);
-            //绑定到butterknife
-            mUnbinder = ButterKnife.bind(this, mRootView);
-            initView();
         }
         return mRootView;
     }

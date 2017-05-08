@@ -7,7 +7,12 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.view.View;
 
+import com.apkfuns.logutils.LogUtils;
+
 import org.simple.eventbus.EventBus;
+
+import butterknife.ButterKnife;
+import butterknife.Unbinder;
 
 /**
  * Created by jess on 29/04/2017 16:12
@@ -17,10 +22,7 @@ import org.simple.eventbus.EventBus;
 public class FragmentDelegateImpl implements IFragmentDelegate {
     private FragmentManager mFragmentManager;
     private Fragment mFragment;
-
-
-
-
+    private Unbinder mUnbinder;
 
     public FragmentDelegateImpl(FragmentManager fragmentManager, Fragment fragment) {
         this.mFragmentManager = fragmentManager;
@@ -29,6 +31,9 @@ public class FragmentDelegateImpl implements IFragmentDelegate {
 
     @Override
     public void onAttach(Context context) {
+        if (((IFragment)mFragment).useEventBus())//如果要使用eventbus请将此方法返回true
+            EventBus.getDefault().register(mFragment);//注册到事件主线
+        ((IFragment)mFragment).setupFragmentComponent(((IApplicationDelegate) mFragment.getActivity().getApplication()).getAppComponent());
 
     }
 
@@ -39,13 +44,14 @@ public class FragmentDelegateImpl implements IFragmentDelegate {
 
     @Override
     public void onCreateView(View view, Bundle savedInstanceState) {
+        if (view != null) {
+            mUnbinder = ButterKnife.bind(mFragment, view);
+        }
+        ((IFragment)mFragment).initView();
     }
 
     @Override
     public void onActivityCreate(Bundle savedInstanceState) {
-        if (((IFragment)mFragment).useEventBus())//如果要使用eventbus请将此方法返回true
-            EventBus.getDefault().register(mFragment);//注册到事件主线
-        ((IFragment)mFragment).setupFragmentComponent(((IApplicationDelegate) mFragment.getActivity().getApplication()).getAppComponent());
         ((IFragment)mFragment).initData();
     }
 
@@ -76,16 +82,26 @@ public class FragmentDelegateImpl implements IFragmentDelegate {
 
     @Override
     public void onDestroyView() {
-
+        if (mUnbinder != null && mUnbinder != mUnbinder.EMPTY) {
+            try {
+                mUnbinder.unbind();
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+                //fix Bindings already cleared
+                LogUtils.w("onDestroyView: " + e.getMessage());
+            }
+        }
     }
 
     @Override
     public void onDestroy() {
-        if (((IFragment)mFragment).useEventBus())//如果要使用eventbus请将此方法返回true
+        if (((IFragment)mFragment).useEventBus()) {
+            //如果要使用eventbus请将此方法返回true
             EventBus.getDefault().unregister(mFragment);//注册到事件主线
-
+        }
         this.mFragmentManager = null;
         this.mFragment = null;
+        this.mUnbinder = null;
     }
 
     @Override
@@ -106,6 +122,7 @@ public class FragmentDelegateImpl implements IFragmentDelegate {
     protected FragmentDelegateImpl(Parcel in) {
         this.mFragmentManager = in.readParcelable(FragmentManager.class.getClassLoader());
         this.mFragment = in.readParcelable(Fragment.class.getClassLoader());
+        this.mUnbinder = in.readParcelable(Unbinder.class.getClassLoader());
     }
 
     public static final Creator<FragmentDelegateImpl> CREATOR = new Creator<FragmentDelegateImpl>() {
