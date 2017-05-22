@@ -35,9 +35,11 @@
 -keepresourcexmlelements manifest/application/meta-data@value=GlideModule
 
 ################common###############
--keep class com.jess.arms.widget.** { *; } #自定义控件不参与混淆
+
 -keep public class * implements com.jess.arms.integration.ConfigModule
+
  #实体类不参与混淆
+-keep class com.jess.arms.widget.** { *; } #自定义控件不参与混淆
 -keep class * implements android.os.Parcelable {
   public static final android.os.Parcelable$Creator *;
 }
@@ -249,7 +251,8 @@
 
 ################RxCache#################
 -dontwarn io.rx_cache.internal.**
--keepclassmembers enum io.rx_cache.Source { *; }
+-keep class io.rx_cache.internal.Record { *; }
+-keep class io.rx_cache.Source { *; }
 
 -keep class io.victoralbertos.jolyglot.** { *; }
 -keep interface io.victoralbertos.jolyglot.** { *; }

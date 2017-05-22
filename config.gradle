@@ -69,7 +69,7 @@ ext {
             //test
             "junit"                    : "junit:junit:4.12",
             "androidJUnitRunner"       : "android.support.test.runner.AndroidJUnitRunner",
-            "runner"                   : 'com.android.support.test:runner:0.5',
+            "runner"                   : "com.android.support.test:runner:0.5",
             "espresso-core"            : "com.android.support.test.espresso:espresso-core:${android["espressoSdkVersion"]}",
             "espresso-contrib"         : "com.android.support.test.espresso:espresso-contrib:${android["espressoSdkVersion"]}",
             "espresso-intents"         : "com.android.support.test.espresso:espresso-intents:${android["espressoSdkVersion"]}",

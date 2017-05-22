@@ -31,15 +31,13 @@ public class FragmentDelegateImpl implements IFragmentDelegate {
 
     @Override
     public void onAttach(Context context) {
-        if (((IFragment)mFragment).useEventBus())//如果要使用eventbus请将此方法返回true
-            EventBus.getDefault().register(mFragment);//注册到事件主线
-        ((IFragment)mFragment).setupFragmentComponent(((IApplicationDelegate) mFragment.getActivity().getApplication()).getAppComponent());
-
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-
+        if (((IFragment)mFragment).useEventBus())//如果要使用eventbus请将此方法返回true
+            EventBus.getDefault().register(mFragment);//注册到事件主线
+        ((IFragment)mFragment).setupFragmentComponent(((IApplicationDelegate) mFragment.getActivity().getApplication()).getAppComponent());
     }
 
     @Override
@@ -107,6 +105,14 @@ public class FragmentDelegateImpl implements IFragmentDelegate {
     @Override
     public void onDetach() {
 
+    }
+
+    /**
+     * Return true if the fragment is currently added to its activity.
+     */
+    @Override
+    public boolean isAdded() {
+        return mFragment == null ? false : mFragment.isAdded();
     }
 
 

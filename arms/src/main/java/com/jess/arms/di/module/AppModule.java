@@ -29,13 +29,6 @@ public class AppModule {
         this.mApplication = application;
     }
 
-    /**
-     * 释放资源
-     */
-    public void release() {
-        mApplication = null;
-    }
-
     @Singleton
     @Provides
     public Application provideApplication() {

@@ -51,24 +51,6 @@ public class GlobalConfigModule {
         this.mGsonConfiguration = builder.gsonConfiguration;
     }
 
-    /**
-     * 释放资源
-     */
-    public void release() {
-        mApiUrl = null;
-        mLoaderStrategy = null;
-        mHandler = null;
-        if (mInterceptors != null) {
-            mInterceptors.clear();
-            mInterceptors = null;
-        }
-        mCacheFile = null;
-        mRetrofitConfiguration = null;
-        mOkhttpConfiguration = null;
-        mRxCacheConfiguration = null;
-        mGsonConfiguration = null;
-    }
-
     public static Builder builder() {
         return new Builder();
     }

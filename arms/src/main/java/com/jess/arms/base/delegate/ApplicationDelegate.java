@@ -29,8 +29,6 @@ import javax.inject.Inject;
 public class ApplicationDelegate implements IApplicationDelegate {
     private Application mApplication;
     private AppComponent mAppComponent;
-    private AppModule mAppModule;
-    private GlobalConfigModule mGlobalConfigModule;
     @Inject
     protected ActivityLifecycle mActivityLifecycle;
     private final List<ConfigModule> mModules;
@@ -51,14 +49,11 @@ public class ApplicationDelegate implements IApplicationDelegate {
 
 
     public void onCreate() {
-        mAppModule = new AppModule(mApplication);
-        mGlobalConfigModule = getGlobeConfigModule(mApplication,mModules);
-
         mAppComponent = DaggerAppComponent
                 .builder()
-                .appModule(mAppModule)////提供application
+                .appModule(new AppModule(mApplication))////提供application
                 .clientModule(new ClientModule())//用于提供okhttp和retrofit的单例
-                .globalConfigModule(mGlobalConfigModule)//全局配置
+                .globalConfigModule(getGlobeConfigModule(mApplication,mModules))//全局配置
                 .build();
         mAppComponent.inject(this);
 
@@ -86,11 +81,11 @@ public class ApplicationDelegate implements IApplicationDelegate {
     public void onTerminate() {
         //注销网络状态广播
         NetworkStateReceiver.unRegisterNetworkStateReceiver(mApplication);
+        HandlerUtil.removeCallbacksAndMessages();
 
 
         if (mActivityLifecycle != null) {
             mApplication.unregisterActivityLifecycleCallbacks(mActivityLifecycle);
-            mActivityLifecycle.release();
             mActivityLifecycle = null;
         }
 
@@ -110,22 +105,6 @@ public class ApplicationDelegate implements IApplicationDelegate {
             mAppLifecycles.clear();
             mAppLifecycles = null;
         }
-
-        HandlerUtil.removeCallbacksAndMessages();
-
-
-
-        if (mGlobalConfigModule != null) {
-            mGlobalConfigModule.release();
-            mGlobalConfigModule = null;
-        }
-
-
-        if (mAppModule != null) {
-            mAppModule.release();
-            mAppModule = null;
-        }
-
         if (mAppComponent != null) {
             AppManager appManager = mAppComponent.getAppManager();
             if (appManager != null) {

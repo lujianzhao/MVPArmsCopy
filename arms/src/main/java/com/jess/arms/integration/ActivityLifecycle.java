@@ -165,10 +165,6 @@ public class ActivityLifecycle implements Application.ActivityLifecycleCallbacks
         }
     }
 
-    public void release() {
-        mAppManager = null;
-    }
-
     private IActivityDelegate fetchActivityDelegate(Activity activity) {
         IActivityDelegate activityDelegate = null;
         if (activity instanceof IActivity && activity.getIntent() != null) {
@@ -187,7 +183,7 @@ public class ActivityLifecycle implements Application.ActivityLifecycleCallbacks
             LogUtils.w(f.toString() + "onFragmentAttached");
             if (f instanceof IFragment && f.getArguments() != null) {
                 IFragmentDelegate fragmentDelegate = fetchFragmentDelegate(f);
-                if (fragmentDelegate == null) {
+                if (fragmentDelegate == null || !fragmentDelegate.isAdded()) {
                     fragmentDelegate = new FragmentDelegateImpl(fm, f);
                     f.getArguments().putParcelable(IFragmentDelegate.FRAGMENT_DELEGATE, fragmentDelegate);
                 }
