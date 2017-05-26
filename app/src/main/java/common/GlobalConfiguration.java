@@ -16,8 +16,11 @@ import android.widget.TextView;
 
 import com.apkfuns.logutils.LogLevel;
 import com.apkfuns.logutils.LogUtils;
+import com.google.gson.GsonBuilder;
 import com.jess.arms.base.delegate.IApplicationDelegate;
 import com.jess.arms.base.delegate.ApplicationDelegate;
+import com.jess.arms.di.module.AppModule;
+import com.jess.arms.di.module.ClientModule;
 import com.jess.arms.di.module.GlobalConfigModule;
 import com.jess.arms.http.IGlobalHttpHandler;
 import com.jess.arms.http.RequestInterceptor;
@@ -34,6 +37,7 @@ import org.json.JSONObject;
 
 import java.util.List;
 
+import io.rx_cache2.internal.RxCache;
 import me.jessyan.mvparms.demo.BuildConfig;
 import me.jessyan.mvparms.demo.R;
 import me.jessyan.mvparms.demo.mvp.model.api.Api;
@@ -42,6 +46,7 @@ import me.jessyan.mvparms.demo.mvp.model.api.service.CommonService;
 import me.jessyan.mvparms.demo.mvp.model.api.service.UserService;
 import me.jessyan.mvparms.demo.mvp.ui.activity.UserActivity;
 import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
@@ -56,26 +61,25 @@ public class GlobalConfiguration implements ConfigModule {
 
     @Override
     public void applyOptions(Context context, GlobalConfigModule.Builder builder) {
-        builder.baseurl(Api.APP_DOMAIN)
-                .globalHttpHandler(new IGlobalHttpHandler() {// 这里可以提供一个全局处理Http请求和响应结果的处理类,
-                    // 这里可以比客户端提前一步拿到服务器返回的结果,可以做一些操作,比如token超时,重新获取
-                    @Override
-                    public Response onHttpResultResponse(String httpResult, Interceptor.Chain chain, Response response) {
+        builder.baseurl(Api.APP_DOMAIN).globalHttpHandler(new IGlobalHttpHandler() {// 这里可以提供一个全局处理Http请求和响应结果的处理类,
+            // 这里可以比客户端提前一步拿到服务器返回的结果,可以做一些操作,比如token超时,重新获取
+            @Override
+            public Response onHttpResultResponse(String httpResult, Interceptor.Chain chain, Response response) {
                         /* 这里可以先客户端一步拿到每一次http请求的结果,可以解析成json,做一些操作,如检测到token过期后
                            重新请求token,并重新执行请求 */
-                        try {
-                            if (!TextUtils.isEmpty(httpResult) && RequestInterceptor.isJson(response.body())) {
-                                JSONArray array = new JSONArray(httpResult);
-                                JSONObject object = (JSONObject) array.get(0);
-                                String login = object.getString("login");
-                                String avatar_url = object.getString("avatar_url");
-                                LogUtils.w("Result ------> " + login + "    ||   Avatar_url------> " + avatar_url);
-                            }
+                try {
+                    if (!TextUtils.isEmpty(httpResult) && RequestInterceptor.isJson(response.body())) {
+                        JSONArray array = new JSONArray(httpResult);
+                        JSONObject object = (JSONObject) array.get(0);
+                        String login = object.getString("login");
+                        String avatar_url = object.getString("avatar_url");
+                        LogUtils.w("Result ------> " + login + "    ||   Avatar_url------> " + avatar_url);
+                    }
 
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            return response;
-                        }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    return response;
+                }
 
 
                      /* 这里如果发现token过期,可以先请求最新的token,然后在拿新的token放入request里去重新请求
@@ -90,18 +94,33 @@ public class GlobalConfiguration implements ConfigModule {
                         如果使用okhttp将新的请求,请求成功后,将返回的response  return出去即可
                         如果不需要返回新的结果,则直接把response参数返回出去 */
 
-                        return response;
-                    }
+                return response;
+            }
 
-                    // 这里可以在请求服务器之前可以拿到request,做一些操作比如给request统一添加token或者header以及参数加密等操作
-                    @Override
-                    public Request onHttpRequestBefore(Interceptor.Chain chain, Request request) {
+            // 这里可以在请求服务器之前可以拿到request,做一些操作比如给request统一添加token或者header以及参数加密等操作
+            @Override
+            public Request onHttpRequestBefore(Interceptor.Chain chain, Request request) {
                         /* 如果需要再请求服务器之前做一些操作,则重新返回一个做过操作的的requeat如增加header,不做操作则直接返回request参数
                            return chain.request().newBuilder().header("token", tokenId)
                                   .build(); */
-                        return request;
-                    }
-                });
+                return request;
+            }
+        }).gsonConfiguration(new AppModule.GsonConfiguration() {
+            @Override
+            public void configGson(Context context, GsonBuilder builder) {
+                //这里可以自己自定义配置Gson的参数
+            }
+        }).okhttpConfiguration(new ClientModule.OkhttpConfiguration() {
+            @Override
+            public void configOkhttp(Context context, OkHttpClient.Builder builder) {
+                //这里可以自己自定义配置Okhttp的参数
+            }
+        }).rxCacheConfiguration(new ClientModule.RxCacheConfiguration() {
+            @Override
+            public void configRxCache(Context context, RxCache.Builder builder) {
+                //这里可以自己自定义配置RxCache的参数
+            }
+        });
     }
 
     @Override
@@ -124,7 +143,7 @@ public class GlobalConfiguration implements ConfigModule {
 
                 initReference(application);
 
-               }
+            }
 
             private void installLeakCanary(Application application) {
                 RefWatcher refWatcher;
@@ -149,34 +168,27 @@ public class GlobalConfiguration implements ConfigModule {
             }
 
             private void initReference(Application application) {
-                Recovery.getInstance()
-                        .debug(BuildConfig.LOG_DEBUG)
-                        .recoverInBackground(false)
-                        .recoverStack(true)
-                        .mainPage(UserActivity.class)
-                        .recoverEnabled(true)
-                        .callback(new RecoveryCallback() {
-                            @Override
-                            public void stackTrace(String s) {
+                Recovery.getInstance().debug(BuildConfig.LOG_DEBUG).recoverInBackground(false).recoverStack(true).mainPage(UserActivity.class).recoverEnabled(true).callback(new RecoveryCallback() {
+                    @Override
+                    public void stackTrace(String s) {
 
-                            }
+                    }
 
-                            @Override
-                            public void cause(String s) {
+                    @Override
+                    public void cause(String s) {
 
-                            }
+                    }
 
-                            @Override
-                            public void exception(String s, String s1, String s2, int i) {
+                    @Override
+                    public void exception(String s, String s1, String s2, int i) {
 
-                            }
+                    }
 
-                            @Override
-                            public void throwable(Throwable throwable) {
-                                LogUtils.e(throwable);
-                            }
-                        })
-                        .silent(!BuildConfig.LOG_DEBUG, Recovery.SilentMode.RECOVER_ACTIVITY_STACK)
+                    @Override
+                    public void throwable(Throwable throwable) {
+                        LogUtils.e(throwable);
+                    }
+                }).silent(!BuildConfig.LOG_DEBUG, Recovery.SilentMode.RECOVER_ACTIVITY_STACK)
                         //忽略某些Activity的错误
 //                .skip(TestActivity.class)
                         .init(application);
@@ -194,9 +206,7 @@ public class GlobalConfiguration implements ConfigModule {
         lifecycles.add(new Application.ActivityLifecycleCallbacks() {
             @Override
             public void onActivityCreated(final Activity activity, Bundle savedInstanceState) {
-
-
-
+                LogUtils.w(activity+" - onActivityCreated");
 
                 //这里全局给Activity设置toolbar和title,你想象力有多丰富,这里就有多强大,以前放到BaseActivity的操作都可以放到这里
                 if (activity.findViewById(R.id.toolbar) != null) {
@@ -226,32 +236,32 @@ public class GlobalConfiguration implements ConfigModule {
 
             @Override
             public void onActivityStarted(Activity activity) {
-
+                LogUtils.w(activity+" - onActivityStarted");
             }
 
             @Override
             public void onActivityResumed(Activity activity) {
-
+                LogUtils.w(activity+" - onActivityResumed");
             }
 
             @Override
             public void onActivityPaused(Activity activity) {
-
+                LogUtils.w(activity+" - onActivityPaused");
             }
 
             @Override
             public void onActivityStopped(Activity activity) {
-
+                LogUtils.w(activity+" - onActivityStopped");
             }
 
             @Override
             public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-
+                LogUtils.w(activity+" - onActivitySaveInstanceState");
             }
 
             @Override
             public void onActivityDestroyed(Activity activity) {
-
+                LogUtils.w(activity+" - onActivityDestroyed");
             }
         });
     }
@@ -259,9 +269,18 @@ public class GlobalConfiguration implements ConfigModule {
     @Override
     public void injectFragmentLifecycle(Context context, List<FragmentManager.FragmentLifecycleCallbacks> lifecycles) {
         lifecycles.add(new FragmentManager.FragmentLifecycleCallbacks() {
+
+            @Override
+            public void onFragmentCreated(FragmentManager fm, Fragment f, Bundle savedInstanceState) {
+                // 在配置变化的时候将这个 Fragment 保存下来,在 Activity 由于配置变化重建是重复利用已经创建的Fragment。
+                // https://developer.android.com/reference/android/app/Fragment.html?hl=zh-cn#setRetainInstance(boolean)
+                // 在 Activity 中绑定少量的 Fragment 建议这样做,如果需要绑定较多的 Fragment 不建议设置此参数,如 ViewPager 需要展示较多 Fragment
+                f.setRetainInstance(true);
+            }
+
             @Override
             public void onFragmentDestroyed(FragmentManager fm, Fragment f) {
-                ((RefWatcher)((IApplicationDelegate) f.getActivity().getApplication()).getAppComponent().extras().get(RefWatcher.class.getName())).watch(this);
+                ((RefWatcher) ((IApplicationDelegate) f.getActivity().getApplication()).getAppComponent().extras().get(RefWatcher.class.getName())).watch(this);
             }
         });
     }

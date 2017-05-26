@@ -1,5 +1,6 @@
 package com.jess.arms.base.delegate;
 
+import android.os.Bundle;
 import android.support.annotation.LayoutRes;
 
 import com.jess.arms.di.component.AppComponent;
@@ -22,9 +23,9 @@ public interface IFragment {
 
     boolean useEventBus();
 
-    void initView();
+    void initView(Bundle savedInstanceState);
 
-    void initData();
+    void initData(Bundle savedInstanceState);
 
     /**
      * 此方法是让外部调用使fragment做一些操作的,比如说外部的activity想让fragment对象执行一些方法,

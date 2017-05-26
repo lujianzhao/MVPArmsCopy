@@ -116,10 +116,6 @@ public class ActivityLifecycle implements Application.ActivityLifecycleCallbacks
 
     @Override
     public void onActivityPaused(Activity activity) {
-        if (mAppManager.getCurrentActivity() == activity) {
-            mAppManager.setCurrentActivity(null);
-        }
-
         IActivityDelegate activityDelegate = fetchActivityDelegate(activity);
         if (activityDelegate != null) {
             activityDelegate.onPause();
@@ -128,6 +124,10 @@ public class ActivityLifecycle implements Application.ActivityLifecycleCallbacks
 
     @Override
     public void onActivityStopped(Activity activity) {
+        if (mAppManager.getCurrentActivity() == activity) {
+            mAppManager.setCurrentActivity(null);
+        }
+
         IActivityDelegate activityDelegate = fetchActivityDelegate(activity);
         if (activityDelegate != null) {
             activityDelegate.onStop();
@@ -299,5 +299,6 @@ public class ActivityLifecycle implements Application.ActivityLifecycleCallbacks
             }
             return delegate;
         }
+
     }
 }

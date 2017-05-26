@@ -9,7 +9,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.apkfuns.logutils.LogUtils;
 import com.jess.arms.base.delegate.IFragment;
 import com.jess.arms.mvp.IPresenter;
 import com.trello.rxlifecycle2.LifecycleProvider;
@@ -20,7 +19,6 @@ import com.trello.rxlifecycle2.android.RxLifecycleAndroid;
 
 import javax.inject.Inject;
 
-import butterknife.Unbinder;
 import io.reactivex.Observable;
 import io.reactivex.subjects.BehaviorSubject;
 import me.yokeyword.fragmentation.SupportFragment;
@@ -33,8 +31,6 @@ public abstract class BaseFragment<P extends IPresenter> extends SupportFragment
     private final BehaviorSubject<FragmentEvent> lifecycleSubject = BehaviorSubject.create();
 
     protected View mRootView;
-
-    private Unbinder mUnbinder;
 
     @Inject
     protected P mPresenter;
@@ -136,17 +132,6 @@ public abstract class BaseFragment<P extends IPresenter> extends SupportFragment
         if (mPresenter != null) {
             mPresenter.onDestroy();
             this.mPresenter = null;
-        }
-
-        if (mUnbinder != null && mUnbinder != mUnbinder.EMPTY) {
-            try {
-                mUnbinder.unbind();
-            } catch (IllegalStateException e) {
-                e.printStackTrace();
-                //fix Bindings already cleared
-                LogUtils.e("Fragment onDestroyView: " + e.getMessage());
-            }
-            mUnbinder = null;
         }
 
         this.mRootView = null;

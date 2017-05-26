@@ -1,6 +1,7 @@
 package com.jess.arms.base.delegate;
 
 
+import android.os.Bundle;
 import android.support.annotation.LayoutRes;
 
 import com.jess.arms.di.component.AppComponent;
@@ -25,9 +26,9 @@ public interface IActivity {
 
     boolean useEventBus();
 
-    void initView();
+    void initView(Bundle savedInstanceState);
 
-    void initData();
+    void initData(Bundle savedInstanceState);
 
     /**
      * 这个Activity是否会使用Fragment,框架会根据这个属性判断是否注册{@link android.support.v4.app.FragmentManager.FragmentLifecycleCallbacks}
