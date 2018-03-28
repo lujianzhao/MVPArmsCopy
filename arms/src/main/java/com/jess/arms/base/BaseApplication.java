@@ -32,7 +32,9 @@ public abstract class BaseApplication extends MultiDexApplication implements IAp
      */
     @Override
     public void onTerminate() {
-        this.mApplicationDelegate.onTerminate();
+        if (this.mApplicationDelegate != null) {
+            this.mApplicationDelegate.onTerminate();
+        }
         super.onTerminate();
     }
 

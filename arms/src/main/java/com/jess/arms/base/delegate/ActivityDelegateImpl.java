@@ -30,6 +30,7 @@ public class ActivityDelegateImpl implements IActivityDelegate {
             //新版本的转场动画
             mActivity.getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
         }
+
         if (((IActivity)mActivity).useEventBus()) {
             //如果要使用eventbus请将此方法返回true
             EventBus.getDefault().register(mActivity);//注册到事件主线

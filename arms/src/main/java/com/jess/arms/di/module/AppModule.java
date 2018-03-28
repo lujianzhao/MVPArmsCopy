@@ -2,6 +2,7 @@ package com.jess.arms.di.module;
 
 import android.app.Application;
 import android.content.Context;
+import android.support.annotation.Nullable;
 import android.support.v4.util.ArrayMap;
 
 import com.google.gson.Gson;
@@ -37,9 +38,10 @@ public class AppModule {
 
     @Singleton
     @Provides
-    public Gson provideGson(Application application, GsonConfiguration configuration){
+    public Gson provideGson(Application application,@Nullable GsonConfiguration configuration){
         GsonBuilder builder = new GsonBuilder();
-        configuration.configGson(application, builder);
+        if (configuration != null)
+            configuration.configGson(application, builder);
         return builder.create();
     }
 
@@ -62,13 +64,6 @@ public class AppModule {
     }
 
     public interface GsonConfiguration {
-        GsonConfiguration EMPTY = new GsonConfiguration() {
-            @Override
-            public void configGson(Context context, GsonBuilder builder) {
-
-            }
-        };
-
         void configGson(Context context, GsonBuilder builder);
     }
 

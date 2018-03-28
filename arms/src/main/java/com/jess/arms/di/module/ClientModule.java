@@ -2,6 +2,8 @@ package com.jess.arms.di.module;
 
 import android.app.Application;
 import android.content.Context;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import com.jess.arms.common.utils.FileUtil;
 import com.jess.arms.http.IGlobalHttpHandler;
@@ -45,12 +47,13 @@ public class ClientModule {
      */
     @Singleton
     @Provides
-    Retrofit provideRetrofit(Application application, RetrofitConfiguration configuration, Retrofit.Builder builder, OkHttpClient client, HttpUrl httpUrl) {
+    Retrofit provideRetrofit(Application application, @Nullable RetrofitConfiguration configuration, Retrofit.Builder builder, OkHttpClient client, HttpUrl httpUrl) {
         builder.baseUrl(httpUrl)//域名
                 .client(client)//设置okhttp
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())//使用rxjava
                 .addConverterFactory(GsonConverterFactory.create());//使用Gson
-        configuration.configRetrofit(application, builder);
+        if (configuration != null)
+            configuration.configRetrofit(application, builder);
         return builder.build();
     }
 
@@ -62,22 +65,29 @@ public class ClientModule {
      */
     @Singleton
     @Provides
-    OkHttpClient provideClient(Application application, OkhttpConfiguration configuration, OkHttpClient.Builder builder, Interceptor intercept, List<Interceptor> interceptors, final IGlobalHttpHandler handler) {
-         builder.connectTimeout(TIME_OUT, TimeUnit.SECONDS)
+    OkHttpClient provideClient(Application application, @Nullable OkhttpConfiguration configuration, OkHttpClient.Builder builder, Interceptor intercept
+            , @Nullable List<Interceptor> interceptors, @Nullable final IGlobalHttpHandler handler) {
+        builder
+                .connectTimeout(TIME_OUT, TimeUnit.SECONDS)
                 .readTimeout(TIME_OUT, TimeUnit.SECONDS)
-                .addInterceptor(new Interceptor() {
-                    @Override
-                    public Response intercept(Chain chain) throws IOException {
-                        return chain.proceed(handler.onHttpRequestBefore(chain,chain.request()));
-                    }
-                })
                 .addNetworkInterceptor(intercept);
-        if (interceptors != null && interceptors.size() > 0) {//如果外部提供了interceptor的数组则遍历添加
+
+        if (handler != null)
+            builder.addInterceptor(new Interceptor() {
+                @Override
+                public Response intercept(@NonNull Chain chain) throws IOException {
+                    return  chain.proceed(handler.onHttpRequestBefore(chain, chain.request()));
+                }
+            });
+
+        if (interceptors != null) {//如果外部提供了interceptor的集合则遍历添加
             for (Interceptor interceptor : interceptors) {
                 builder.addInterceptor(interceptor);
             }
         }
-        configuration.configOkhttp(application, builder);
+
+        if (configuration != null)
+            configuration.configOkhttp(application, builder);
         return builder.build();
     }
 
@@ -113,9 +123,10 @@ public class ClientModule {
      */
     @Singleton
     @Provides
-    RxCache provideRxCache(Application application, RxCacheConfiguration configuration, @Named("RxCacheDirectory") File cacheDirectory) {
+    RxCache provideRxCache(Application application,@Nullable  RxCacheConfiguration configuration, @Named("RxCacheDirectory") File cacheDirectory) {
         RxCache.Builder builder = new RxCache.Builder();
-        configuration.configRxCache(application, builder);
+        if (configuration != null)
+            configuration.configRxCache(application, builder);
         return builder.persistence(cacheDirectory, new GsonSpeaker());
     }
 
@@ -135,35 +146,14 @@ public class ClientModule {
 
 
     public interface RetrofitConfiguration {
-        RetrofitConfiguration EMPTY = new RetrofitConfiguration() {
-            @Override
-            public void configRetrofit(Context context, Retrofit.Builder builder) {
-
-            }
-        };
-
         void configRetrofit(Context context, Retrofit.Builder builder);
     }
 
     public interface OkhttpConfiguration {
-        OkhttpConfiguration EMPTY = new OkhttpConfiguration() {
-            @Override
-            public void configOkhttp(Context context, OkHttpClient.Builder builder) {
-
-            }
-        };
-
         void configOkhttp(Context context, OkHttpClient.Builder builder);
     }
 
     public interface RxCacheConfiguration {
-        RxCacheConfiguration EMPTY = new RxCacheConfiguration() {
-            @Override
-            public void configRxCache(Context context, RxCache.Builder builder) {
-
-            }
-        };
-
         void configRxCache(Context context, RxCache.Builder builder);
     }
 

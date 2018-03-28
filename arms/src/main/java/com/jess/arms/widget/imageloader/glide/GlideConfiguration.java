@@ -31,7 +31,6 @@ public class GlideConfiguration extends OkHttpGlideModule {
 
         builder.setMemoryCache(new LruResourceCache(customMemoryCacheSize));
         builder.setBitmapPool(new LruBitmapPool(customBitmapPoolSize));
-
     }
 
     private class GlideDiskCacheFactory implements DiskCache.Factory{

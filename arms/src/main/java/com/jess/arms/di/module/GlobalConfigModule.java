@@ -1,6 +1,7 @@
 package com.jess.arms.di.module;
 
 import android.app.Application;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import com.jess.arms.common.utils.FileUtil;
@@ -58,6 +59,7 @@ public class GlobalConfigModule {
 
     @Singleton
     @Provides
+    @Nullable
     List<Interceptor> provideInterceptors() {
         return mInterceptors;
     }
@@ -77,8 +79,9 @@ public class GlobalConfigModule {
 
     @Singleton
     @Provides
+    @Nullable
     IGlobalHttpHandler provideGlobalHttpHandler() {
-        return mHandler == null ? IGlobalHttpHandler.EMPTY : mHandler;//打印请求信息
+        return mHandler;//打印请求信息
     }
 
     /**
@@ -95,26 +98,30 @@ public class GlobalConfigModule {
 
     @Singleton
     @Provides
+    @Nullable
     ClientModule.RetrofitConfiguration provideRetrofitConfiguration() {
-        return mRetrofitConfiguration == null ? ClientModule.RetrofitConfiguration.EMPTY : mRetrofitConfiguration;
+        return mRetrofitConfiguration;
     }
 
     @Singleton
     @Provides
+    @Nullable
     ClientModule.OkhttpConfiguration provideOkhttpConfiguration() {
-        return mOkhttpConfiguration == null ? ClientModule.OkhttpConfiguration.EMPTY : mOkhttpConfiguration;
+        return mOkhttpConfiguration ;
     }
 
     @Singleton
     @Provides
+    @Nullable
     ClientModule.RxCacheConfiguration provideRxCacheConfiguration() {
-        return mRxCacheConfiguration == null ? ClientModule.RxCacheConfiguration.EMPTY : mRxCacheConfiguration;
+        return mRxCacheConfiguration;
     }
 
     @Singleton
     @Provides
+    @Nullable
     AppModule.GsonConfiguration provideGsonConfiguration() {
-        return mGsonConfiguration == null ? AppModule.GsonConfiguration.EMPTY : mGsonConfiguration;
+        return mGsonConfiguration;
     }
 
     public static final class Builder {
